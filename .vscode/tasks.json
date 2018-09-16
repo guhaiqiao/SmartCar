@@ -1,0 +1,24 @@
+// https://code.visualstudio.com/docs/editor/tasks
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "python",
+            "type": "shell",
+            "command": "C:/Users/yanta/AppData/Local/Programs/Python/Python36/python",
+            "args": [
+                "${file}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "test:HelloWorld",
+            "type": "shell",
+            "command": "mvn -Dtest=HelloWorldTest#testHelloWorld test",
+            "group": "test"
+        },
+    ]
+}
