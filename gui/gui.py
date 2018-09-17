@@ -1,6 +1,10 @@
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
-# import sys
+import os
+
+path = os.getcwd()
+File = path + os.sep + "gui" + os.sep + "pc.ui"
+# print(File)
 
 
 class Surface(QtWidgets.QDialog):

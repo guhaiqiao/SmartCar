@@ -88,7 +88,7 @@
             "deque": "cpp",
             "unordered_map": "cpp"
         },
-        "python.pythonPath": "C:\\Users\\10199\\AppData\\Local\\Programs\\Python\\Python37\\python.exe", // 启用后，会在打开文件时尝试猜测字符集编码
+        "python.pythonPath": "C:\\Users\\10199\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", // 启用后，会在打开文件时尝试猜测字符集编码
         "latex-workshop.view.pdf.viewer": "tab",
         "latex-workshop.latex.recipes": [{
             "name": "texify",

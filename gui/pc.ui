@@ -24,23 +24,6 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTimeEdit" name="timeEdit">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>530</y>
-      <width>441</width>
-      <height>111</height>
-     </rect>
-    </property>
-    <property name="time">
-     <time>
-      <hour>0</hour>
-      <minute>1</minute>
-      <second>4</second>
-     </time>
-    </property>
-   </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
@@ -54,7 +37,7 @@
      <string>串口设置</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_4">
+   <widget class="QPushButton" name="pushButton_connect">
     <property name="geometry">
      <rect>
       <x>790</x>
@@ -67,7 +50,7 @@
      <string>连接</string>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>740</x>
@@ -78,21 +61,21 @@
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="pushButton_start">
        <property name="text">
         <string>开始</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="pushButton_pause">
        <property name="text">
         <string>暂停</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_3">
+      <widget class="QPushButton" name="pushButton_end">
        <property name="text">
         <string>结束</string>
        </property>
@@ -100,14 +83,33 @@
      </item>
     </layout>
    </widget>
+   <widget class="QLCDNumber" name="TimeCounter">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>530</y>
+      <width>411</width>
+      <height>131</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color:rgb(78,104,255)</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::NoFrame</enum>
+    </property>
+    <property name="digitCount">
+     <number>8</number>
+    </property>
+    <property name="segmentStyle">
+     <enum>QLCDNumber::Flat</enum>
+    </property>
+   </widget>
+   <zorder>layoutWidget</zorder>
    <zorder>graphicsView</zorder>
-   <zorder>timeEdit</zorder>
-   <zorder>pushButton</zorder>
-   <zorder>pushButton_2</zorder>
-   <zorder>pushButton_3</zorder>
    <zorder>label</zorder>
-   <zorder>pushButton_4</zorder>
-   <zorder>pushButton_4</zorder>
+   <zorder>pushButton_connect</zorder>
+   <zorder>TimeCounter</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
