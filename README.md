@@ -55,10 +55,10 @@ if timeout, repeated 2 -->
 ##  timeout and data lost
 ### timeout
 - All the timeout is 0.5s.
-- Over the time will resend all the data last sent.
+- Over the time will make the side to send resend all the data last sent and the timeout will double itself.
 ### data lost
 
-- __car__ did not receive all the right traffic information
+- __car__  receive some wrong traffic information
   - __car__ to __pc__:
 
         id + t(traffic) + 0(number of the wrong information) + 1/2/3(order)
@@ -68,3 +68,6 @@ if timeout, repeated 2 -->
   - __car__ to __pc__:
 
         id + o(ok)
+- __car__ did not receive all the traffic information (time is out) (the serial.read timeout should be shorter than 0.5s)
+  - clear the data received just now
+  - receive all the data again
