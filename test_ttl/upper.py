@@ -1,5 +1,5 @@
 # coding=utf-8
-import os
+# import os
 import threading
 from time import ctime, sleep
 import serial
@@ -16,7 +16,8 @@ import serial
 # -------------------------------------------------------------------------------------------------
 
 message = '0r'
-check = message[0]
+check = chr(ord(message[0]) ^ ord(message[1]))
+message += check
 
 
 def send(port, message, time=3):
@@ -39,7 +40,7 @@ def receive(port, alldata):
     while True:
         if event.isSet():
             byte = port.read(1)
-            byte = str(byte)[2:-1]
+            byte = byte.decode('utf-8')
             if byte != '':
                 rdata += byte
                 alldata += byte
@@ -55,7 +56,7 @@ def receive(port, alldata):
 
 # 设置端口
 upper = serial.Serial()
-upper.port = 'COM4'
+upper.port = 'COM7'
 upper.baudrate = 9600
 upper.timeout = 1
 
@@ -73,8 +74,8 @@ if __name__ == '__main__':
 
     # send_thread.join()
     # receive_thread.join()
-    sleep(20)
-    print("total receive: %s" % alldata)
-    # print(alldata)
+    # sleep(20)
+    # print("total receive: %s" % alldata)
+    # # print(alldata)
     # upper.close()
-    os.system('pause')
+    # os.system('pause')
