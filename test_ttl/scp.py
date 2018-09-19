@@ -1,114 +1,124 @@
+'''
+A module implementing Smartcar Protocol v2.0
+Module version: 2.1
+
+Usage:
+    Use Smartcar class for everything.
+
+I may cancel Package class and add verification in the next version.
+'''
+
 import serial
 import threading
 
-#全局变量，输入缓冲区、输出缓冲区以及序列号seq
-inbuf = []
-outbuf = []
-seq = 0
+#全局变量
+recvbuf = []   #输入缓冲区，包含Package对象
+sendbuf = []   #输出缓冲区，包含Package对象
+seq = 0   #对方发来的seq，我方的ack，即对方下次将要发送的包的seq
+ack = 0   #我方接收的ack，对方的seq，即我方下次将要发送的包的seq
+PCID = 0   #上位机的ID
+sending_flag = False
 
 class Package():
-    def __init__(self, ID, flag, data):
-        self.ID = ID
+    #数据包类，用于封装一个数据包
+    
+    def __init__(self, srcID, dstID, flag, data):
+        self.srcID = srcID
+        self.dstID = dstID
         self.flag = flag
         self.data = data   #应为bytes类型
         self.len = len(data)
         self.check = 0
-        
-class Listener(threading.Thread):
-    #监听器，负责一直收发数据，属性有：car、ID
-    
-    def __init__(self, car, ID):
+
+class Receiver(threading.Thread):
+    #数据包接收线程
+
+    def __init__(self, car, srcID, lock):
         threading.Thread.__init__(self)
         self.car = car
-        self.ID = ID
-
-    def sendpackage(self):
-        #发送缓冲区中第一个包，若无，则发送一个空包。反复发送直到接收到ACK。若ACK无数据，返回True，若ACK有数据，则把包放入缓冲区，且若此时输出缓冲区非空，则返回True，否则返回False。
-
-        global seq, inbuf, outbuf
-        seq += 1
-        while True:
-            if len(inbuf) > 0:
-                package = outbuf.pop(0)
-                self.car.write(bytes([package.ID, seq, 0, len(package.data), package.check]))   #首部
-                self.car.write(package.data)   #数据
-            else:
-                self.car.write(bytes([self.ID, seq, 0, 0, 0]))
-            self.car.timeout = 0.5
-            buf = self.car.read(5)
-            if len(buf) < 5:
-                continue
-            elif buf[0:3] != bytes([package.ID, seq + 1, 1]):
-                continue
-
-            if buf[3] == bytes([0]):
-                seq += 1
-                return True
-            else:
-                car.timeout = None
-                inbuf.append(Package(int.from_bytes(buf[0], byteorder = 'big'), int.from_bytes(buf[2], byteorder = 'big'), self.car.read(int.from_bytes(buf[3], byteorder = 'big'))))
-                seq += 1
-                if len(outbuf) > 0:
-                    return True
-                else:
-                    return False
-
-    def recvpackage(self):
-        #反复回复ACK直到接收到下一个包，反复接收此包直到接收成功，然后把包放入缓冲区，若此时输出缓冲区有数据，则返回False，否则返回True
-
-        global seq, inbuf, outbuf
-        seq += 1
-        while True:
-            self.car.write(bytes([self.ID, seq, 1, 0, 0]))
-            self.car.timeout = 0.5
-            buf = self.car.read(5)
-            if len(buf) < 5:
-                continue
-            elif buf[0:3] != bytes([self.ID, seq + 1, 0]):
-                continue
-            self.car.timeout = None
-            inbuf.append(Package(int.from_bytes(buf[0], byteorder = 'big'), int.from_bytes(buf[2], byteorder = 'big'), self.car.read(int.from_bytes(buf[3], byteorder = 'big'))))
-            seq += 1
-            if len(outbuf) > 0:
-                return False
-            else:
-                return True
+        self.srcID = srcID
+        self.lock = lock
 
     def run(self):
+        global recvbuf, sendbuf, seq, ack, PCID, sending_flag, timer
         while True:
-            while (self.sendpackage()):
-                pass
-            while (self.recvpackage()):
-                pass
+            self.car.timeout = None
+            head = self.car.read(10)
+            with self.lock:
+                if head[0] != self.srcID or head[1] != PCID:   #地址不符合则丢弃该包
+                    self.car.timeout = 0.5
+                    self.car.read(head[8])
+                    continue
+                elif int.from_bytes(head[2:4], byteorder = "little") != seq:   #seq不符合则发送ACK
+                    self.car.timeout = 0.5
+                    self.car.read(head[8])
+                    self.car.write(bytes([PCID, self.srcID, ack % 256, ack // 256, seq % 256, seq // 256, 0, 0, 0, 0]))   #发ACK包
+                    continue
+                elif head[8] != 0:
+                    data = self.car.read(head[8])   #存储该包，有3个步骤
+                    recvbuf.append(Package(head[0], head[1], head[7], data))
+                    seq += 1
+                    if sending_flag:
+                        timer.cancel()   #清除计时，有4个步骤
+                        sending_flag = False
+                        sendbuf.pop(0)
+                        ack += 1
+                elif head[8] == 0 and int.from_bytes(head[4:6], byteorder = "little") != ack + 1:
+                    pass
+                elif head[8] == 0 and int.from_bytes(head[4:6], byteorder = "little") == ack + 1 and sending_flag:
+                    timer.cancel()
+                    sending_flag = False
+                    sendbuf.pop(0)
+                    ack += 1
+
+def send_once(car, dstID, lock):
+    global timer, sending_flag
+    with lock:
+        car.write(bytes([PCID, dstID, ack % 256, ack // 256, seq % 256, seq // 256, 0, 0, len(sendbuf[0].data), 0]) + sendbuf[0].data)
+        sending_flag = True
+        timer = threading.Timer(0.5, send_once, (car, dstID, lock))
+        timer.start()
 
 class Smartcar():
     #小车类，属性有：serial对象car、整型小车ID ID
     
-    def __init__(self, port, baudrate, ID):
+    def __init__(self, port, baudrate, dstID):
         self.car = serial.Serial(port, baudrate)
-        self.ID = ID
-        lis = Listener(self.car, self.ID)
-        lis.start()
+        self.dstID = dstID
+        self.lock = threading.Lock()
+        recv = Receiver(self.car, self.dstID, self.lock)
+        recv.start()
         
-    def send(self, package):
-        #发送一个数据包
-        outbuf.append(package)
+    def send(self, data):
+        #发送一串bytes
+        while len(sendbuf) > 0:
+            pass
+        sendbuf.append(Package(PCID, self.dstID, 0, data))
+        send_once(self.car, self.dstID, self.lock)
 
     def read(self):
-        #读取一个数据包
-        return inbuf.pop(0)
+        #读取下一个数据包中的data(bytes)
+        return recvbuf.pop(0).data
 
     def readable(self):
         #检测当前缓冲区是否有数据包可读
-        if len(inbuf) > 0:
+        if len(recvbuf) > 0:
             return True
         else:
             return False
 
-    def inbufcount(self):
+    def recvbufcount(self):
         #输入缓冲区数据包个数
-        return len(inbuf)
+        return len(recvbuf)
 
-    def outbufcount(self):
+    def sendbufcount(self):
         #输出缓冲区数据包个数
-        return len(outbuf)
+        return len(sendbuf)
+
+if __name__ == "__main__":
+    #调试代码
+    
+    car = Smartcar('COM1', 9600, 0)
+    #while True:
+    #    car.send("1111111111111111".encode())
+    
