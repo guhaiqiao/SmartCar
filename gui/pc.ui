@@ -24,11 +24,11 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="serial_port">
     <property name="geometry">
      <rect>
       <x>690</x>
-      <y>30</y>
+      <y>240</y>
       <width>81</width>
       <height>18</height>
      </rect>
@@ -41,7 +41,7 @@
     <property name="geometry">
      <rect>
       <x>790</x>
-      <y>20</y>
+      <y>230</y>
       <width>112</width>
       <height>34</height>
      </rect>
@@ -99,17 +99,71 @@
      <enum>QFrame::NoFrame</enum>
     </property>
     <property name="digitCount">
-     <number>8</number>
+     <number>5</number>
     </property>
     <property name="segmentStyle">
      <enum>QLCDNumber::Flat</enum>
     </property>
    </widget>
+   <widget class="QLabel" name="second">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>560</y>
+      <width>101</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>36</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::AutoText</enum>
+    </property>
+    <property name="scaledContents">
+     <bool>false</bool>
+    </property>
+    <property name="indent">
+     <number>-1</number>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="TimeDisplay">
+    <property name="geometry">
+     <rect>
+      <x>700</x>
+      <y>30</y>
+      <width>171</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::NoFrame</enum>
+    </property>
+    <property name="digitCount">
+     <number>8</number>
+    </property>
+    <property name="segmentStyle">
+     <enum>QLCDNumber::Flat</enum>
+    </property>
+    <property name="value" stdset="0">
+     <double>0.100000000000000</double>
+    </property>
+   </widget>
    <zorder>layoutWidget</zorder>
    <zorder>graphicsView</zorder>
-   <zorder>label</zorder>
+   <zorder>serial_port</zorder>
    <zorder>pushButton_connect</zorder>
    <zorder>TimeCounter</zorder>
+   <zorder>second</zorder>
+   <zorder>TimeDisplay</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
