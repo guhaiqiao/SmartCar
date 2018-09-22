@@ -77,8 +77,7 @@
          <bool>true</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">
-</string>
+         <string notr="true"/>
         </property>
        </widget>
       </item>
@@ -180,7 +179,7 @@
            </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,6">
+           <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2">
             <item>
              <widget class="QLabel" name="label_3">
               <property name="font">
@@ -204,31 +203,9 @@
             </item>
             <item>
              <widget class="QComboBox" name="PortChoice">
-              <item>
-               <property name="text">
-                <string/>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>COM4</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>COM5</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>COM6</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>COM7</string>
-               </property>
-              </item>
+              <property name="frame">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
            </layout>
@@ -275,6 +252,19 @@
             </property>
             <property name="text">
              <string>开始</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>images/2.jpg</normaloff>images/2.jpg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
