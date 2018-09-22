@@ -77,8 +77,7 @@
          <bool>true</bool>
         </property>
         <property name="styleSheet">
-         <string notr="true">
-</string>
+         <string notr="true"/>
         </property>
        </widget>
       </item>
@@ -275,6 +274,19 @@
             </property>
             <property name="text">
              <string>开始</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>images/2.jpg</normaloff>images/2.jpg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
