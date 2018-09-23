@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 import os
 import serial
 import serial.tools.list_ports
-# import time
+import time
 import threading
 import sys
 import map_info as mp
@@ -11,9 +11,9 @@ import traffic_info as trf
 
 path = os.getcwd() + os.sep + 'Upper Computer' + os.sep + 'Program'
 GUI = path + os.sep + 'pc2.ui'
-TRAFFIC = path + os.sep + 'traffic_test.dat'
+TRAFFIC = path + os.sep + '0.dat'
 MAP = path + os.sep + 'map_test.txt'
-
+path_trf = path + os.sep + 'traffic'
 # print(GUI)
 Ui_MainWindow, QtBaseClass = uic.loadUiType(GUI)
 # 后期UI界面文字字体及颜色修改
@@ -40,16 +40,16 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
     def init_Ui(self):
         self.Timer = QtCore.QTimer()  # 计时器
         self.second = 0  # 初始化计时器秒数
+        self.time_stop = 0
         self.Timer.timeout.connect(self.timeout)
         self.port = ''
         self.portlist = []
         self.team_name = ''
         self.score = '0'
         self.set_port_flag = False
-        self.width = 881
-        self.height = 631
+        self.traffic_flag = True
 
-        self.actionsave.triggered.connect(self.save)
+        # self.actionsave.triggered.connect(self.save)
         self.pushButton_start.clicked.connect(self.start)
         self.pushButton_start.setEnabled(False)
         self.pushButton_pause.clicked.connect(self.pause)
@@ -70,40 +70,48 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.mapSet()
         self.trfSet()
-        self.drawmap()
         self.show()
+        self.width = 881
+        self.height = 631
+        self.drawmap()
 
     def start(self):
         # self.ser.open()  # 打开串口
         print(self.pushButton_start.text())
         if self.pushButton_start.text() == '开始':
-            # if self.team_name == '':
-            #     WrongInfo = ErrorInfo('请先输入队名')
-            #     WrongInfo.display()
-            #     return
-            self.Timer.start(10)
-            self.score = 0
+            self.drawmap()
+            self.Timer.start(100)
+            self.score = '0'
+            # self.car_position()
+            self.time_init = time.perf_counter()
             self.pushButton_start.setEnabled(False)
             self.pushButton_pause.setEnabled(True)
             self.pushButton_end.setEnabled(True)
 
         elif self.pushButton_start.text() == '继续':
-            self.Timer.start(10)
+            self.time_stop_finl = time.perf_counter()
+            self.Timer.start(100)
+            self.time_stop += self.time_stop_finl - self.time_stop_init
+            print(self.time_stop)
             self.pushButton_pause.setEnabled(True)
             self.pushButton_start.setEnabled(False)
 
         else:  # 清零操作
             self.second = 0
+            self.time_stop = 0
             self.TimeCounter.display('0')
             self.pushButton_start.setText('开始')
-            self.pushButton_start.repaint()
+            self.pushButton_file.setText('载入路况')
+            self.pushButton_file.setEnabled(True)
             self.Team.setText('')
-            global traffic_info
-            traffic_info = ''
+            self.traffic.read(TRAFFIC)
+            # self.car_position()
+            # self.drawcar()
+            self.drawmap()
 
     def pause(self):
         self.Timer.stop()
-        # self.pushButton_end.setEnabled(True)
+        self.time_stop_init = time.perf_counter()
         self.pushButton_start.setEnabled(True)
         self.pushButton_start.setText('继续')
         self.pushButton_pause.setEnabled(False)
@@ -111,12 +119,13 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
     def end(self):
         self.Timer.stop()
         # self.ser.close()
-        self.score = self.time_now
+        self.score = self.time_display
         self.pushButton_start.setText('清零')
-        self.pushButton_start.repaint()
+        # self.pushButton_start.repaint()
         self.pushButton_end.setEnabled(False)
         self.pushButton_start.setEnabled(True)
         self.pushButton_pause.setEnabled(False)
+        self.save()
 
     def portWatch(self):
         while True:
@@ -143,19 +152,13 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
     def onChanged(self, text):  # 队名输入
         self.team_name = text
         global traffic_info
-        if self.team_name != '' and self.set_port_flag and traffic_info != '':
+        if self.team_name != '' and self.set_port_flag and self.traffic_flag:
             self.pushButton_start.setEnabled(True)
             print(self.team_name)
         else:
             self.pushButton_start.setEnabled(False)
 
     def port_connect(self):
-        # if self.port == '':
-        #     WrongInfo = ErrorInfo('请先选择端口')
-        #     WrongInfo.display()
-        #     # QtWidgets.QMessageBox.information(
-        #         # self, '提示', '请先选择端口', QtWidgets.QMessageBox.Close)
-        #     return
         self.ser = serial.Serial()
         self.ser.port = self.port
         self.set_port_flag = True
@@ -166,25 +169,42 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         print('connect')
 
     def fileRead(self):
-        fname = QtWidgets.QFileDialog.getOpenFileName(
-            self, '请选择载入的路况', 'D:\Computer\AST\SmartCar\SmartCar\gui',
-            'Document ( *.txt)')
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, '请选择载入的路况变化', path,
+                                                      'Document ( *.txt)')
         if fname[0]:
-            f = open(fname[0], 'r')
-            with f:
-                global traffic_info
-                traffic_info = f.read()
-                print(traffic_info)
+            # print(fname[0])
+            # self.traffic.read(fname[0])
+            self.trfChange(fname[0])
+            self.traffic_flag = True
+            self.pushButton_file.setEnabled(False)
+            self.pushButton_file.setText('路况' + fname[0][-8:-4])
+
+    def trfChange(self, file):
+        c_f = open(file, 'r')
+        c_list = c_f.readlines()
+        self.c_info = {}
+        self.c_time = []
+        c_number = len(c_list)
+        for i in range(0, c_number):
+            list = [int(x) for x in c_list[i].split()]
+            self.c_info[list[0]] = list[1]
+            # c_info.append(list)
+        for my_key in self.c_info.keys():
+            self.c_time.append(my_key)
+        # print(self.c_time)
 
     def timeout(self):
-        self.second += 0.01
-        self.sec = int(self.second * 10) / 10
-        self.time_now = str(self.sec)
-        self.TimeCounter.display(self.time_now)  # 显示时间
-        self.DrawMap()
+        self.time_now = time.perf_counter()
+        self.second = self.time_now - self.time_init - self.time_stop
+        self.second = int(self.second * 1000) / 1000
+        self.time_display = str(self.second)
+        self.time_display = self.time_display[:self.time_display.find('.') + 2]
+        self.TimeCounter.display(self.time_display)
+        self.c_trf()
+        self.drawcar()
 
     def save(self):
-        score = open('score.txt', 'a')
+        score = open(path + os.sep + 'score.txt', 'a')
         score.write(self.team_name + ' ' + self.score + '\n')
 
     def closeEvent(self, event):
@@ -198,23 +218,17 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             event.ignore()
 
     def mapsize(self):
-        # while True:
-        # if (self.width, self.height) != (self.Map.width,
-        #                                     self.Map.height()):
         self.width = self.Map.width()
         self.height = self.Map.height()
-            # print([self.width, self.height])
-        # else:
-            # pass
 
     def mapSet(self):
         self.scene = QtWidgets.QGraphicsScene()
         self.scene.clear()
         self.Map.setScene(self.scene)
-        self.pen1 = QtGui.QPen(
-            Qt.white, 30, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
-        self.pen2 = QtGui.QPen(
-            Qt.black, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.pen1 = QtGui.QPen(Qt.white, 30, QtCore.Qt.SolidLine,
+                               QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.pen2 = QtGui.QPen(Qt.black, 3, QtCore.Qt.SolidLine,
+                               QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
         self.brush = QtGui.QBrush(Qt.white)
         self.graph = mp.Graph()
         self.graph.read(MAP)
@@ -258,10 +272,18 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.traffic = trf.Traffic()
         self.traffic.read(TRAFFIC)
         self.pen = []
-        self.color = [Qt.green, Qt.green, Qt.green, Qt.yellow, Qt.yellow, Qt.red, Qt.red, Qt.red]
+        self.color = [
+            Qt.green, Qt.green, Qt.green, Qt.yellow, Qt.yellow, Qt.red, Qt.red,
+            Qt.red, Qt.white
+        ]
         for item in self.color:
-            self.pen.append(QtGui.QPen(item, 15, QtCore.Qt.SolidLine,  # 颜色数字
-                              QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
+            self.pen.append(
+                QtGui.QPen(
+                    item,
+                    15,
+                    QtCore.Qt.SolidLine,  # 颜色数字
+                    QtCore.Qt.RoundCap,
+                    QtCore.Qt.RoundJoin))
 
     def drawtrf(self):
         for i in range(self.traffic.point_num):
@@ -271,11 +293,39 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
                     y1 = self.graph.y[i] * self.y_scale + self.height / 35
                     x2 = self.graph.x[j] * self.x_scale + self.width / 35
                     y2 = self.graph.y[j] * self.y_scale + self.height / 35
-                    self.scene.addLine(
-                        x1, y1, x2, y2, self.pen[self.traffic.line[i][j] - 1])
+                    self.scene.addLine(x1, y1, x2, y2,
+                                       self.pen[self.traffic.line[i][j] - 1])
 
-    # def showEvent(self):
-    #     self.Map.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
+    def c_trf(self):
+        # print(1)
+        for i in range(0, len(self.c_time)):
+            if abs(self.second - self.c_time[i]) < 0.1:
+                self.traffic.read(path_trf + os.sep +
+                                  str(self.c_info[self.c_time[i]]) + '.dat')
+                self.drawmap()
+                break
+
+    def coordinate(self, x, y):
+        return (x * self.x_scale + self.width / 35,
+                y * self.y_scale + self.height / 35)
+
+    def car_position(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+    def drawcar(self):
+        # car_postition(x, y)  # 获取小车坐标
+        (x, y) = self.coordinate(self.x, self.y)  # 坐标变化（暂时还很辣鸡）
+        self.carsize = 20
+        self.pen_car = QtGui.QPen(Qt.blue)
+        self.brush_car = QtGui.QBrush(Qt.blue)
+        x = x - self.carsize / 20
+        y = y - self.carsize / 20
+        self.scene.addEllipse(x, y, self.carsize, self.carsize, self.pen_car,
+                              self.brush_car)
+        self.x += 1
+        # self.y += 1
+        self.Map.repaint()
 
 
 if __name__ == '__main__':

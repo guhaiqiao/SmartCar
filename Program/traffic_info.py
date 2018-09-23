@@ -1,27 +1,31 @@
 class Traffic():
     def __init__(self):
-        # self.point = []
-        # self.x = []
-        # self.y = []
         self.line = []
-        self.point_num = 8
+        # self.point_num = 8
 
     def read(self, file):
+        self.line = []
         f = open(file, 'r')
-        while True:
-            info = f.readline()
-            line = [0, 0, 0, 0, 0, 0, 0, 0]
-            if not info:
-                break
-            info = [int(x) for x in info.split()]
-            for i in range(1, len(info), 2):
-                line[info[i] - 1] = info[i + 1]
+        info = f.readlines()
+        self.point_num = len(info)
+        # print(info)
+        for i in range(0, self.point_num):
+            line = []
+            for k in range(0, self.point_num):
+                line.append(0)
+            if i != (len(info) - 1):
+                info[i] = info[i][:-1]
+            info[i] = [int(x) for x in info[i].split()]
+            for j in range(1, len(info[i]), 2):
+                line[info[i][j] - 1] = info[i][j + 1]
             self.line.append(line)
-            # print(info)
+            # print(info[i])
         # print(self.line)
 
 
-if __name__ == '__main__':
-    map_info = Traffic()
-    map_info.read(
-        'D:\\Computer\\AST\\SmartCar\\Upper Computer\\Program\\traffic_test.dat')
+# if __name__ == '__main__':
+#     map_info = Traffic()
+#     map_info.read(
+#         'D:\\Computer\\AST\\SmartCar\\Upper Computer
+#            \\Program\\traffic_test.dat'
+#     )
