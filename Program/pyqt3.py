@@ -1,19 +1,25 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
+from PyQt5.QtCore import Qt
 import os
 import serial
 import serial.tools.list_ports
 # import time
 import threading
 import sys
+import map_info as mp
+import traffic_info as trf
 
-path = os.getcwd()
-File = path + os.sep + 'Upper Computer' + os.sep + 'Program' + os.sep + 'pc2.ui'
-print(File)
-Ui_MainWindow, QtBaseClass = uic.loadUiType(File)
+path = os.getcwd() + os.sep + 'Upper Computer' + os.sep + 'Program'
+GUI = path + os.sep + 'pc2.ui'
+TRAFFIC = path + os.sep + 'traffic_test.dat'
+MAP = path + os.sep + 'map_test.txt'
+
+# print(GUI)
+Ui_MainWindow, QtBaseClass = uic.loadUiType(GUI)
 # 后期UI界面文字字体及颜色修改
 _translate = QtCore.QCoreApplication.translate
 traffic_info = ''
-port_avail = []
+
 
 class Info(QtWidgets.QMessageBox):
     def __init__(self, info=''):
@@ -22,28 +28,6 @@ class Info(QtWidgets.QMessageBox):
 
     def display(self):
         self.information(self, '提示', self.info, self.Close)
-
-
-# class Port(threading.Thread, QObject):
-#     def __init__(self):
-#         threading.Thread.__init__(self)
-#         self.list = []
-#         global port_avail
-#         signal = QtCore.pyqtSignal(port_avail)
-
-#     def run(self):
-#         global port_avail
-#         while True:
-#             if self.list != serial.tools.list_ports.comports():
-#                 self.list = serial.tools.list_ports.comports()
-#                 if len(self.list) <= 0:
-#                     port_avail = []
-#                 else:
-#                     for i in len(list):
-#                         port_avail[i] = self.list[i]
-#             else:
-#                 pass
-
 
 
 class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -62,9 +46,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.team_name = ''
         self.score = '0'
         self.set_port_flag = False
-        # self.find_port = Port()  # 实时监测串口名称
-        # self.find_port.start()
-        # self.load_map_flag = False
+        self.width = 881
+        self.height = 631
 
         self.actionsave.triggered.connect(self.save)
         self.pushButton_start.clicked.connect(self.start)
@@ -83,9 +66,11 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.PortWatch.setDaemon(True)
         self.PortWatch.start()
         self.PortChoice.activated[str].connect(self.onActivated)
-
         self.Team.textChanged[str].connect(self.onChanged)
-        self.DrawMap()
+
+        self.mapSet()
+        self.trfSet()
+        self.drawmap()
         self.show()
 
     def start(self):
@@ -107,7 +92,7 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             self.pushButton_pause.setEnabled(True)
             self.pushButton_start.setEnabled(False)
 
-        else:  #清零操作
+        else:  # 清零操作
             self.second = 0
             self.TimeCounter.display('0')
             self.pushButton_start.setText('开始')
@@ -134,7 +119,6 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_pause.setEnabled(False)
 
     def portWatch(self):
-        global port_avail
         while True:
             if self.portlist != serial.tools.list_ports.comports():
                 self.portlist = serial.tools.list_ports.comports()
@@ -183,7 +167,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def fileRead(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(
-            self, '请选择载入的路况', 'D:\Computer\AST\SmartCar\SmartCar\gui', 'Document ( *.txt)')
+            self, '请选择载入的路况', 'D:\Computer\AST\SmartCar\SmartCar\gui',
+            'Document ( *.txt)')
         if fname[0]:
             f = open(fname[0], 'r')
             with f:
@@ -203,21 +188,94 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         score.write(self.team_name + ' ' + self.score + '\n')
 
     def closeEvent(self, event):
-        reply = QtWidgets.QMessageBox.question(self, '提示',
-            "你竟然要退出？", QtWidgets.QMessageBox.Yes |
-            QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+        reply = QtWidgets.QMessageBox.question(
+            self, '提示', "你竟然要退出？",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No)
         if reply == QtWidgets.QMessageBox.Yes:
             event.accept()
         else:
             event.ignore()
 
-    def DrawMap(self):
-        scene = QtWidgets.QGraphicsScene()
-        scene.clear()
-        self.Map.setScene(scene)
-        pen = QtGui.QPen(QtCore.Qt.green)
-        scene.addLine(0, 0, 0, 200, pen)
-        scene.addLine(0, 0, 100, 200, pen)
+    def mapsize(self):
+        # while True:
+        # if (self.width, self.height) != (self.Map.width,
+        #                                     self.Map.height()):
+        self.width = self.Map.width()
+        self.height = self.Map.height()
+            # print([self.width, self.height])
+        # else:
+            # pass
+
+    def mapSet(self):
+        self.scene = QtWidgets.QGraphicsScene()
+        self.scene.clear()
+        self.Map.setScene(self.scene)
+        self.pen1 = QtGui.QPen(
+            Qt.white, 30, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.pen2 = QtGui.QPen(
+            Qt.black, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.brush = QtGui.QBrush(Qt.white)
+        self.graph = mp.Graph()
+        self.graph.read(MAP)
+        self.x_max = max(self.graph.x)
+        self.y_max = max(self.graph.y)
+        self.circle_size = self.pen1.width() * 0.5
+
+    def drawmap(self):
+        self.scene.clear()
+        self.x_scale = self.width / self.x_max * 9 / 10
+        self.y_scale = self.height / self.y_max * 9 / 10
+        for i in range(self.graph.point_num):
+            # x = (self.graph.x[i]) * self.x_scale - self.circle_size / 2 + self.width / 35
+            # y = (self.graph.y[i]) * self.y_scale - self.circle_size / 2 + self.width / 35
+            # self.scene.addEllipse(
+            #     x, y, self.circle_size, self.circle_size, self.pen1, self.brush)
+            for j in range(self.graph.point_num):
+                if self.graph.line[i][j] != 0:
+                    x1 = self.graph.x[i] * self.x_scale + self.width / 35
+                    y1 = self.graph.y[i] * self.y_scale + self.height / 35
+                    x2 = self.graph.x[j] * self.x_scale + self.width / 35
+                    y2 = self.graph.y[j] * self.y_scale + self.height / 35
+                    self.scene.addLine(x1, y1, x2, y2, self.pen1)
+        self.drawtrf()
+
+        for i in range(self.graph.point_num):
+            for j in range(self.graph.point_num):
+                if self.graph.line[i][j] != 0:
+                    x1 = self.graph.x[i] * self.x_scale + self.width / 35
+                    y1 = self.graph.y[i] * self.y_scale + self.height / 35
+                    x2 = self.graph.x[j] * self.x_scale + self.width / 35
+                    y2 = self.graph.y[j] * self.y_scale + self.height / 35
+                    self.scene.addLine(x1, y1, x2, y2, self.pen2)
+        # scene.setBackgroundBrush(QPixmap("./test.jpg"))  #设置背景图
+
+    def resizeEvent(self, QResizeEvent):
+        self.mapsize()
+        self.drawmap()
+
+    def trfSet(self):
+        self.traffic = trf.Traffic()
+        self.traffic.read(TRAFFIC)
+        self.pen = []
+        self.color = [Qt.green, Qt.green, Qt.green, Qt.yellow, Qt.yellow, Qt.red, Qt.red, Qt.red]
+        for item in self.color:
+            self.pen.append(QtGui.QPen(item, 15, QtCore.Qt.SolidLine,  # 颜色数字
+                              QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
+
+    def drawtrf(self):
+        for i in range(self.traffic.point_num):
+            for j in range(self.traffic.point_num):
+                if self.traffic.line[i][j] != 0:
+                    x1 = self.graph.x[i] * self.x_scale + self.width / 35
+                    y1 = self.graph.y[i] * self.y_scale + self.height / 35
+                    x2 = self.graph.x[j] * self.x_scale + self.width / 35
+                    y2 = self.graph.y[j] * self.y_scale + self.height / 35
+                    self.scene.addLine(
+                        x1, y1, x2, y2, self.pen[self.traffic.line[i][j] - 1])
+
+    # def showEvent(self):
+    #     self.Map.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
 
 if __name__ == '__main__':
