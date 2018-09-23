@@ -46,7 +46,8 @@ class DialogUi(Ui_Dialog, QtBaseClass_dialog):
         # self.flag = True
         self.s_point = self.start_point.text()
         self.e_point = self.end_point.text()
-        self.distroy()
+        self.accept()
+        # self.distroy()
 
     def get_point(self):
         return (self.s_point, self.e_point)
@@ -70,10 +71,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.score = '0'
         self.set_port_flag = False
         self.traffic_flag = True
-        self.x = 0
-        self.y = 0
-        self.start_point = ''
-        self.end_point = ''
+        self.x = 0  # 小车x坐标
+        self.y = 0  # 小车y坐标
 
         self.pushButton_start.clicked.connect(self.start)
         self.pushButton_start.setEnabled(False)
@@ -81,19 +80,16 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_end.setEnabled(False)
         self.pushButton_file.clicked.connect(self.fileRead)
         self.pushButton_connect.clicked.connect(self.port_connect)
-        self.pushButton_connect.setEnabled(False)
         self.pushButton_point.clicked.connect(self.point_choose)
-
-        self.PortChoice.addItem('')
-        self.portWatch()
-        self.PortChoice.activated[str].connect(self.onActivated)
+        self.load_team()
+        self.Team.activated[str].connect(self.onActivated)
         # self.Team.textChanged[str].connect(self.onChanged)
 
         self.mapSet()
         self.trfSet()
         self.show()
-        self.width = 881
-        self.height = 631
+        self.width = 783
+        self.height = 511
         self.drawmap()
 
     def start(self):
@@ -129,8 +125,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             self.pushButton_file.setEnabled(True)
             # self.Team.setText('')
             self.traffic.read(TRAFFIC)
-            self.car_position()
-            # self.drawcar()
+            self.x = 0
+            self.y = 0
             self.drawmap()
 
     def end(self):
@@ -153,17 +149,20 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             pass
 
-    def onActivated(self, text):  # 选择串口（下拉栏）
-        self.portWatch()
-        if (self.port == text):
-            pass
-        else:
-            self.port = text
-            self.pushButton_connect.setText('连接')
-            if self.port != '':
-                self.pushButton_connect.setEnabled(True)
-            else:
-                self.pushButton_connect.setEnabled(False)
+    def onActivated(self, text):  # 选择队伍（下拉栏）
+        if text != '选择队伍':
+            self.team_name = text
+            print(self.team_name)
+
+    def load_team(self):
+        team_f = open(path + os.sep + 'team.txt', 'r')
+        team_name = team_f.readlines()
+        team_name_num = len(team_name)
+        for i in range(0, team_name_num):
+            if i != team_name_num - 1:
+                team_name[i] = team_name[i][:-1]
+            self.Team.addItem(team_name[i])
+        # print(team_name)
 
     # def onChanged(self, text):  # 队名输入
     #     self.team_name = text
@@ -282,16 +281,15 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.scene.addLine(x1, y1, x2, y2, self.pen2)
         # scene.setBackgroundBrush(QPixmap("./test.jpg"))  #设置背景图
 
-    # def resizeEvent(self, QResizeEvent):
-    #     self.mapsize()
-    #     self.drawmap()
+    def resizeEvent(self, QResizeEvent):
+        self.mapsize()
+        self.drawmap()
 
     def point_choose(self):
         point_choose_dialog = DialogUi()
-        point_choose_dialog.show()
         if point_choose_dialog.exec_():
-            # if point_choose_dialog.flag:
             self.start_point, self.end_point = point_choose_dialog.get_point()
+            # print(self.start_point, self.end_point)
 
     def trfSet(self):
         self.traffic = trf.Traffic()

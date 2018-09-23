@@ -1,26 +1,28 @@
 class Graph():
     def __init__(self):
-        self.point = []
         self.x = []
         self.y = []
         self.line = []
-        self.point_num = 8
 
     def read(self, file):
+
+        self.line = []
         f = open(file, 'r')
-        while True:
-            info = f.readline()
-            if not info:
-                break
-            info = [int(x) for x in info.split()]
-            self.x.append(info[1])
-            self.y.append(info[2])
-            self.point.append((info[1], info[2]))
-            line = [0, 0, 0, 0, 0, 0, 0, 0]
-            for i in info[3:]:
-                line[i - 1] = 1
+        info = f.readlines()
+        self.point_num = len(info)
+        for i in range(0, self.point_num):
+            line = []
+            for k in range(0, self.point_num):
+                line.append(0)
+            if i != (len(info) - 1):
+                info[i] = info[i][:-1]
+            info[i] = [int(x) for x in info[i].split()]
+            self.x.append(info[i][1])
+            self.y.append(info[i][2])
+            for j in info[i][3:]:
+                line[j - 1] = 1
             self.line.append(line)
-            # print(info)
+        # print(info)
         # print(self.point)
         # print(self.line)
 
