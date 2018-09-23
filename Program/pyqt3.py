@@ -11,13 +11,15 @@ import traffic_info as trf
 
 path1 = os.getcwd() + os.sep + 'Upper Computer' + os.sep + 'Program'
 path = os.getcwd()
-GUI = path + os.sep + 'pc2.ui'
-print(GUI)
+MAINWINDOW = path + os.sep + 'pc2.ui'
+DIALOG = path + os.sep + 'dialog.ui'
+# print(GUI)
 TRAFFIC = path + os.sep + 'traffic' + os.sep + '0.dat'
 MAP = path + os.sep + 'map_test.txt'
 path_trf = path + os.sep + 'traffic'
 # print(GUI)
-Ui_MainWindow, QtBaseClass = uic.loadUiType(GUI)
+Ui_MainWindow, QtBaseClass = uic.loadUiType(MAINWINDOW)
+Ui_Dialog, QtBaseClass_dialog = uic.loadUiType(DIALOG)
 # 后期UI界面文字字体及颜色修改
 _translate = QtCore.QCoreApplication.translate
 traffic_info = ''
@@ -30,6 +32,24 @@ class Info(QtWidgets.QMessageBox):
 
     def display(self):
         self.information(self, '提示', self.info, self.Close)
+
+
+class DialogUi(Ui_Dialog, QtBaseClass_dialog):
+    def __init__(self):
+        QtBaseClass_dialog.__init__(self)
+        Ui_Dialog.__init__(self)
+        self.setupUi(self)
+        self.pushButton.clicked.connect(self.get)
+        self.flag = False
+
+    def get(self):
+        self.flag = True
+        self.s_point = self.start_point.text()
+        self.e_point = self.end_point.text()
+        self.distroy()
+
+    def get_point(self):
+        return (self.s_point, self.e_point)
 
 
 class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -52,25 +72,29 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.traffic_flag = True
         self.x = 0
         self.y = 0
+        self.start_point = ''
+        self.end_point = ''
 
         # self.actionsave.triggered.connect(self.save)
         self.pushButton_start.clicked.connect(self.start)
         self.pushButton_start.setEnabled(False)
-        self.pushButton_pause.clicked.connect(self.pause)
-        self.pushButton_pause.setEnabled(False)
+        # self.pushButton_pause.clicked.connect(self.pause)
+        # self.pushButton_pause.setEnabled(False)
         self.pushButton_end.clicked.connect(self.end)
         self.pushButton_end.setEnabled(False)
         self.pushButton_file.clicked.connect(self.fileRead)
         self.pushButton_connect.clicked.connect(self.port_connect)
         self.pushButton_connect.setEnabled(False)
+        self.pushButton_point.clicked.connect(self.point_choose)
 
         self.PortChoice.addItem('')
+        self.portWatch()
         # self.PortChoice.addItem('COM2')
-        self.PortWatch = threading.Thread(target=self.portWatch)
-        self.PortWatch.setDaemon(True)
-        self.PortWatch.start()
+        # self.PortWatch = threading.Thread(target=self.portWatch)
+        # self.PortWatch.setDaemon(True)
+        # self.PortWatch.start()
         self.PortChoice.activated[str].connect(self.onActivated)
-        self.Team.textChanged[str].connect(self.onChanged)
+        # self.Team.textChanged[str].connect(self.onChanged)
 
         self.mapSet()
         self.trfSet()
@@ -88,17 +112,20 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             self.score = '0'
             # self.car_position()
             self.time_init = time.perf_counter()
-            self.pushButton_start.setEnabled(False)
-            self.pushButton_pause.setEnabled(True)
+            self.pushButton_start.setText('暂停')
             self.pushButton_end.setEnabled(True)
+
+        elif self.pushButton_start.text() == '暂停':
+            self.Timer.stop()
+            self.time_stop_init = time.perf_counter()
+            self.pushButton_start.setText('继续')
 
         elif self.pushButton_start.text() == '继续':
             self.time_stop_finl = time.perf_counter()
             self.Timer.start(100)
             self.time_stop += self.time_stop_finl - self.time_stop_init
             print(self.time_stop)
-            self.pushButton_pause.setEnabled(True)
-            self.pushButton_start.setEnabled(False)
+            self.pushButton_start.setText('暂停')
 
         else:  # 清零操作
             self.second = 0
@@ -107,42 +134,34 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             self.pushButton_start.setText('开始')
             self.pushButton_file.setText('载入路况')
             self.pushButton_file.setEnabled(True)
-            self.Team.setText('')
+            # self.Team.setText('')
             self.traffic.read(TRAFFIC)
             self.car_position()
             # self.drawcar()
             self.drawmap()
-
-    def pause(self):
-        self.Timer.stop()
-        self.time_stop_init = time.perf_counter()
-        self.pushButton_start.setEnabled(True)
-        self.pushButton_start.setText('继续')
-        self.pushButton_pause.setEnabled(False)
 
     def end(self):
         self.Timer.stop()
         # self.ser.close()
         self.score = self.time_display
         self.pushButton_start.setText('清零')
-        # self.pushButton_start.repaint()
         self.pushButton_end.setEnabled(False)
         self.pushButton_start.setEnabled(True)
-        self.pushButton_pause.setEnabled(False)
         self.save()
 
     def portWatch(self):
-        while True:
-            if self.portlist != serial.tools.list_ports.comports():
-                self.portlist = serial.tools.list_ports.comports()
-                if len(self.portlist) <= 0:
-                    pass
-                else:
-                    self.PortChoice.addItem(str(self.portlist[0])[-5:-1])
-            else:
+        # while True:
+        if self.portlist != serial.tools.list_ports.comports():
+            self.portlist = serial.tools.list_ports.comports()
+            if len(self.portlist) <= 0:
                 pass
+            else:
+                self.PortChoice.addItem(str(self.portlist[0])[-5:-1])
+        else:
+            pass
 
     def onActivated(self, text):  # 选择串口（下拉栏）
+        self.portWatch()
         if (self.port == text):
             pass
         else:
@@ -153,14 +172,14 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 self.pushButton_connect.setEnabled(False)
 
-    def onChanged(self, text):  # 队名输入
-        self.team_name = text
-        global traffic_info
-        if self.team_name != '' and self.set_port_flag and self.traffic_flag:
-            self.pushButton_start.setEnabled(True)
-            print(self.team_name)
-        else:
-            self.pushButton_start.setEnabled(False)
+    # def onChanged(self, text):  # 队名输入
+    #     self.team_name = text
+    #     global traffic_info
+    #     if self.team_name != '' and self.set_port_flag and self.traffic_flag:
+    #         self.pushButton_start.setEnabled(True)
+    #         print(self.team_name)
+    #     else:
+    #         self.pushButton_start.setEnabled(False)
 
     def port_connect(self):
         self.ser = serial.Serial()
@@ -205,6 +224,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.time_display = self.time_display[:self.time_display.find('.') + 2]
         self.TimeCounter.display(self.time_display)
         self.c_trf()
+        self.mapsize()
+        self.drawmap()
         self.drawcar()
 
     def save(self):
@@ -268,9 +289,15 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.scene.addLine(x1, y1, x2, y2, self.pen2)
         # scene.setBackgroundBrush(QPixmap("./test.jpg"))  #设置背景图
 
-    def resizeEvent(self, QResizeEvent):
-        self.mapsize()
-        self.drawmap()
+    # def resizeEvent(self, QResizeEvent):
+    #     self.mapsize()
+    #     self.drawmap()
+    def point_choose(self):
+        point_choose_dialog = DialogUi()
+        point_choose_dialog.show()
+        if point_choose_dialog.exec_():
+            if point_choose_dialog.flag:
+                self.start_point, self.end_point = point_choose_dialog.get_point()
 
     def trfSet(self):
         self.traffic = trf.Traffic()
