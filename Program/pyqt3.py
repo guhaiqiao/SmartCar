@@ -9,9 +9,11 @@ import sys
 import map_info as mp
 import traffic_info as trf
 
-path = os.getcwd() + os.sep + 'Upper Computer' + os.sep + 'Program'
+path1 = os.getcwd() + os.sep + 'Upper Computer' + os.sep + 'Program'
+path = os.getcwd()
 GUI = path + os.sep + 'pc2.ui'
-TRAFFIC = path + os.sep + '0.dat'
+print(GUI)
+TRAFFIC = path + os.sep + 'traffic' + os.sep + '0.dat'
 MAP = path + os.sep + 'map_test.txt'
 path_trf = path + os.sep + 'traffic'
 # print(GUI)
@@ -48,6 +50,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.score = '0'
         self.set_port_flag = False
         self.traffic_flag = True
+        self.x = 0
+        self.y = 0
 
         # self.actionsave.triggered.connect(self.save)
         self.pushButton_start.clicked.connect(self.start)
@@ -105,7 +109,7 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             self.pushButton_file.setEnabled(True)
             self.Team.setText('')
             self.traffic.read(TRAFFIC)
-            # self.car_position()
+            self.car_position()
             # self.drawcar()
             self.drawmap()
 
@@ -177,7 +181,7 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             self.trfChange(fname[0])
             self.traffic_flag = True
             self.pushButton_file.setEnabled(False)
-            self.pushButton_file.setText('路况' + fname[0][-8:-4])
+            self.pushButton_file.setText('路况' + fname[0][-5:-4])
 
     def trfChange(self, file):
         c_f = open(file, 'r')
