@@ -13,7 +13,7 @@ path = os.getcwd() + os.sep + 'Upper Computer' + os.sep + 'Program'
 GUI = path + os.sep + 'pc2.ui'
 TRAFFIC = path + os.sep + '0.dat'
 MAP = path + os.sep + 'map_test.txt'
-
+path_trf = path + os.sep + 'traffic'
 # print(GUI)
 Ui_MainWindow, QtBaseClass = uic.loadUiType(GUI)
 # 后期UI界面文字字体及颜色修改
@@ -82,7 +82,7 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             self.drawmap()
             self.Timer.start(100)
             self.score = '0'
-            self.car_position()
+            # self.car_position()
             self.time_init = time.perf_counter()
             self.pushButton_start.setEnabled(False)
             self.pushButton_pause.setEnabled(True)
@@ -105,8 +105,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
             self.pushButton_file.setEnabled(True)
             self.Team.setText('')
             self.traffic.read(TRAFFIC)
-            self.car_position()
-            self.drawcar()
+            # self.car_position()
+            # self.drawcar()
             self.drawmap()
 
     def pause(self):
@@ -300,7 +300,7 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         # print(1)
         for i in range(0, len(self.c_time)):
             if abs(self.second - self.c_time[i]) < 0.1:
-                self.traffic.read(path + os.sep +
+                self.traffic.read(path_trf + os.sep +
                                   str(self.c_info[self.c_time[i]]) + '.dat')
                 self.drawmap()
                 break
