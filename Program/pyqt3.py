@@ -40,10 +40,10 @@ class DialogUi(Ui_Dialog, QtBaseClass_dialog):
         Ui_Dialog.__init__(self)
         self.setupUi(self)
         self.pushButton.clicked.connect(self.get)
-        self.flag = False
+        # self.flag = False
 
     def get(self):
-        self.flag = True
+        # self.flag = True
         self.s_point = self.start_point.text()
         self.e_point = self.end_point.text()
         self.distroy()
@@ -75,11 +75,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
         self.start_point = ''
         self.end_point = ''
 
-        # self.actionsave.triggered.connect(self.save)
         self.pushButton_start.clicked.connect(self.start)
         self.pushButton_start.setEnabled(False)
-        # self.pushButton_pause.clicked.connect(self.pause)
-        # self.pushButton_pause.setEnabled(False)
         self.pushButton_end.clicked.connect(self.end)
         self.pushButton_end.setEnabled(False)
         self.pushButton_file.clicked.connect(self.fileRead)
@@ -89,10 +86,6 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.PortChoice.addItem('')
         self.portWatch()
-        # self.PortChoice.addItem('COM2')
-        # self.PortWatch = threading.Thread(target=self.portWatch)
-        # self.PortWatch.setDaemon(True)
-        # self.PortWatch.start()
         self.PortChoice.activated[str].connect(self.onActivated)
         # self.Team.textChanged[str].connect(self.onChanged)
 
@@ -292,12 +285,13 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):
     # def resizeEvent(self, QResizeEvent):
     #     self.mapsize()
     #     self.drawmap()
+
     def point_choose(self):
         point_choose_dialog = DialogUi()
         point_choose_dialog.show()
         if point_choose_dialog.exec_():
-            if point_choose_dialog.flag:
-                self.start_point, self.end_point = point_choose_dialog.get_point()
+            # if point_choose_dialog.flag:
+            self.start_point, self.end_point = point_choose_dialog.get_point()
 
     def trfSet(self):
         self.traffic = trf.Traffic()
