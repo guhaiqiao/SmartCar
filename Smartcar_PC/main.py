@@ -8,6 +8,7 @@ import paho.mqtt.client as mqtt
 import math
 import extdata
 import positioning
+import picture_rc
 
 path = os.getcwd()
 
@@ -132,10 +133,12 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.client = mqtt.Client(client_id='SmartcarPC', userdata='SmartcarPC')
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
-        self.client.connect('test.mosquitto.org')
+        self.client.username_pw_set('smartcar', 'smartcar')
+        self.client.connect('mqtt.gycis.me')
         self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
+        print("Connected with result code "+str(rc))
         self.pushButton_connect.setText('连接成功')
         self.pushButton_connect.setEnabled(False)
 
@@ -243,7 +246,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
 
     def keyPressEvent(self, event):
         if event.text() == 'r':
-            self.rc = RcUi(self, self.client)
+            self.rc = RcUi(self, self.client, self.comboBox_team.currentText())
 
     def closeEvent(self, event):
         reply = QtWidgets.QMessageBox.question(
@@ -288,48 +291,69 @@ class DialogUi_Point(Ui_Dialog_Team, QtBaseClass_Dialog_Point):
         return (self.s_point, self.e_point)
 
 class RcUi(Ui_rc, QtBaseClass_rc):
-    def __init__(self, parent, client):
+    def __init__(self, parent, client, team):
         QtBaseClass_rc.__init__(self, parent)
         Ui_rc.__init__(self)
         self.setupUi(self)
         self.show()
 
         self.client = client
+        self.topic = '/smartcar/' + team + '/rccontrol'
+        self.control_flag = False
+        self.slider_speed.setEnabled(False)
+        self.slider_radius.setEnabled(False)
+        self.setFocusPolicy(Qt.ClickFocus)
+        self.setFocus(True)
+        self.icon.setFocusPolicy(Qt.NoFocus)
 
     def keyPressEvent(self, event):
-        if event.matches(QtGui.QKeySequence.MoveToNextChar):
-            self.icon.setStyleSheet('border-image: url(:/background/images/right.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'right')
-        elif event.matches(QtGui.QKeySequence.MoveToPreviousChar):
-            self.icon.setStyleSheet('border-image: url(:/background/images/left.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'left')
-        elif event.matches(QtGui.QKeySequence.MoveToNextLine):
-            self.icon.setStyleSheet('border-image: url(:/background/images/backward.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'backward')
-        elif event.matches(QtGui.QKeySequence.MoveToPreviousLine):
-            self.icon.setStyleSheet('border-image: url(:/background/images/forward.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'forward')
-        elif event.matches(QtGui.QKeySequence.SelectNextChar):   #Shift+右
-            self.icon.setStyleSheet('border-image: url(:/background/images/clockwise.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'clockwise')
-        elif event.matches(QtGui.QKeySequence.SelectPreviousChar):   #Shift+左
-            self.icon.setStyleSheet('border-image: url(:/background/images/anticlockwise.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'anti-clockwise')
-        elif event.text() == 'w':
-            self.icon.setStyleSheet('border-image: url(:/background/images/forward.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'forward' + str(self.slider_speed.value()))
-        elif event.text() == 's':
-            self.icon.setStyleSheet('border-image: url(:/background/images/backward.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'backward' + str(self.slider_speed.value()))
-        elif event.text() == 'a':
-            self.icon.setStyleSheet('border-image: url(:/background/images/left.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'left' + str(self.slider_radius.value()))
-        elif event.text() == 'd':
-            self.icon.setStyleSheet('border-image: url(:/background/images/right.jpg);')
-            self.client.publish('/smartcar/rccontrol', 'right' + str(self.slider_radius.value()))
+        if not event.isAutoRepeat():
+            if event.text() == 'w' and not self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/forward.jpg);')
+                self.client.publish(self.topic, 'forward')
+            elif event.text() == 's' and not self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/backward.jpg);')
+                self.client.publish(self.topic, 'backward')
+            elif event.text() == 'a' and not self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/left.jpg);')
+                self.client.publish(self.topic, 'left')
+            elif event.text() == 'd' and not self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/right.jpg);')
+                self.client.publish(self.topic, 'right')
+            elif event.text() == 'e': 
+                self.icon.setStyleSheet('border-image: url(:/background/images/clockwise.jpg);')
+                self.client.publish(self.topic, 'clockwise')
+            elif event.text() == 'q':
+                self.icon.setStyleSheet('border-image: url(:/background/images/anticlockwise.jpg);')
+                self.client.publish(self.topic, 'anti-clockwise')
+
+            elif event.text() == 'w'and self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/forward.jpg);')
+                self.client.publish(self.topic, 'forward' + str(self.slider_speed.value()))
+            elif event.text() == 's'and self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/backward.jpg);')
+                self.client.publish(self.topic, 'backward' + str(self.slider_speed.value()))
+            elif event.text() == 'a'and self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/left.jpg);')
+                self.client.publish(self.topic, 'left' + str(self.slider_radius.value()))
+            elif event.text() == 'd'and self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/right.jpg);')
+                self.client.publish(self.topic, 'right' + str(self.slider_radius.value()))
+            elif event.text() == 'f':
+                self.control_flag = not self.control_flag
+                self.slider_speed.setEnabled(self.control_flag)
+                self.slider_radius.setEnabled(self.control_flag)
+            elif event.text() == '1':
+                self.client.publish(self.topic, 'other1')
+            elif event.text() == '2':
+                self.client.publish(self.topic, 'other2')
+            elif event.text() == '3':
+                self.client.publish(self.topic, 'other3')
 
     def keyReleaseEvent(self, event):
-        self.icon.setStyleSheet('border-image: url(:/background/images/stop.jpg);')
+        if not event.isAutoRepeat():
+            self.icon.setStyleSheet('border-image: url(:/background/images/stop.jpg);')
+            self.client.publish(self.topic, 'stop')
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
