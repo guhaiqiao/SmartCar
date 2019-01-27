@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>157</width>
-    <height>70</height>
+    <width>169</width>
+    <height>92</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,7 +38,13 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_ports"/>
+        <widget class="QComboBox" name="comboBox_ports">
+         <item>
+          <property name="text">
+           <string/>
+          </property>
+         </item>
+        </widget>
        </item>
       </layout>
      </item>
