@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="background">
+    <file>images/1.jpg</file>
+    <file>images/anticlockwise.jpg</file>
+    <file>images/backward.jpg</file>
+    <file>images/clockwise.jpg</file>
+    <file>images/forward.jpg</file>
+    <file>images/left.jpg</file>
+    <file>images/right.jpg</file>
+    <file>images/stop.jpg</file>
+  </qresource>
+</RCC>
