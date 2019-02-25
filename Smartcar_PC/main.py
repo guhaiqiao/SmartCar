@@ -69,11 +69,11 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.y_max = max(self.graph.y)
 
         #初始化路况信息
-        # self.traffic = []
-        # self.traffic.append(extdata.Traffic(self.graph.point_num))
-        # self.current_traffic = 0
+        self.traffic = []
+        self.traffic.append(extdata.Traffic(self.graph.point_num))
+        self.current_traffic = 0
 
-        # self.score = '0'
+        self.score = '0'
 
         #初始化小车信息
         self.x = 0
@@ -86,7 +86,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.pushButton_start.clicked.connect(self.start)
         self.pushButton_end.clicked.connect(self.end)
         self.pushButton_end.setEnabled(False)
-        # self.pushButton_traffic.clicked.connect(self.traffic_read)
+        self.pushButton_traffic.clicked.connect(self.traffic_read)
         self.pushButton_connect.clicked.connect(self.connect)
 
         self.scene = QtWidgets.QGraphicsScene()
@@ -94,12 +94,12 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.Map.setScene(self.scene)
 
         #笔型初始化
-        self.pen_start_point = QtGui.QPen(Qt.black)
-        self.brush_start = QtGui.QBrush(Qt.black)
-        self.pen_end_point = QtGui.QPen(Qt.red)
-        self.brush_end = QtGui.QBrush(Qt.red)
-        self.pen_car = QtGui.QPen(Qt.blue)
-        self.brush_car = QtGui.QBrush(Qt.blue)
+        self.pen_start_point = QtGui.QPen(Qt.blue)
+        self.brush_start = QtGui.QBrush(Qt.blue)
+        self.pen_end_point = QtGui.QPen(Qt.yellow)
+        self.brush_end = QtGui.QBrush(Qt.yellow)
+        self.pen_car = QtGui.QPen(Qt.red)
+        self.brush_car = QtGui.QBrush(Qt.red)
         self.pens = []
         self.colors = [
             QtGui.QColor(28, 255, 11),
@@ -112,14 +112,13 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             QtGui.QColor(255, 121, 0),
             QtGui.QColor(232, 84, 12),
             QtGui.QColor(255, 50, 5),
-            QtGui.QColor(255, 0, 0),
-            QtGui.QColor(0, 0, 0),  # 黑色
+            QtGui.QColor(255, 0, 0), 
         ]
         for color in self.colors:
             self.pens.append(
                 QtGui.QPen(
                     color,
-                    10,
+                    15,
                     QtCore.Qt.SolidLine,  # 颜色数字
                     QtCore.Qt.RoundCap,
                     QtCore.Qt.RoundJoin))
@@ -132,17 +131,15 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.drawall()
 
     def choose_points(self):
-        point_choose_dialog = DialogUi_Point()
+        point_choose_dialog = DialogUi_Point(self.client, self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())])
         if point_choose_dialog.exec_():
-            self.depart_point, self.arrive_point = point_choose_dialog.get_point(
-            )
+            self.depart_point, self.arrive_point = point_choose_dialog.get_point()
             self.pushButton_point.setText('起点:' + str(self.depart_point) +
                                           ' 终点:' + str(self.arrive_point))
             self.drawall()
 
     def connect(self):
-        self.client = mqtt.Client(
-            client_id='SmartcarPC', userdata='SmartcarPC')
+        self.client = mqtt.Client(client_id='SmartcarPC', userdata='SmartcarPC')
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
         self.client.username_pw_set('smartcar', 'smartcar')
@@ -150,7 +147,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
-        print("Connected with result code " + str(rc))
+        print("Connected with result code "+str(rc))
         self.pushButton_connect.setText('连接成功')
         self.pushButton_connect.setEnabled(False)
 
@@ -165,17 +162,20 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             self.time_init = time.perf_counter()
             self.pushButton_start.setText('暂停')
             self.pushButton_end.setEnabled(True)
+            self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([0]))
 
         elif self.pushButton_start.text() == '暂停':
             self.Timer.stop()
             self.time_stop_init = time.perf_counter()
             self.pushButton_start.setText('继续')
+            self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([2]))
 
         elif self.pushButton_start.text() == '继续':
             self.time_stop_finl = time.perf_counter()
             self.Timer.start(100)
             self.time_stop += self.time_stop_finl - self.time_stop_init
             self.pushButton_start.setText('暂停')
+            self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([0]))
 
         else:  # 清零操作
             self.init_vars()
@@ -189,16 +189,16 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.pushButton_end.setEnabled(False)
         self.pushButton_start.setEnabled(True)
         self.save()
+        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([1]))
 
-    # def traffic_read(self):
-    #     dirname = QtWidgets.QFileDialog.getExistingDirectory(
-    #         self, '请选择载入的路况变化', path)
-    #     if dirname:
-    #         self.traffic = []
-    #         for i in range(200):
-    #             self.traffic.append(extdata.Traffic())
-    #             self.traffic[-1].read(dirname + '/' + str(i + 1) + '.txt')
-    #         self.pushButton_traffic.setText('路况' + dirname.split('/')[-1])
+    def traffic_read(self):
+        dirname = QtWidgets.QFileDialog.getExistingDirectory(self, '请选择载入的路况变化', path)
+        if dirname:
+            self.traffic = []
+            for i in range(200):
+                self.traffic.append(extdata.Traffic())
+                self.traffic[-1].read(dirname + '/' + str(i + 1) + '.txt')
+            self.pushButton_traffic.setText('路况' + dirname.split('/')[-1])
 
     def timeout(self):
         self.time_now = time.perf_counter()
@@ -207,19 +207,19 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.time_display = str(self.second)
         self.time_display = self.time_display[:self.time_display.find('.') + 2]
         self.TimeCounter.display(self.time_display)
-        # self.current_traffic = math.floor(
-        #     self.second) // 1 if math.floor(self.second) // 1 < len(
-        #         self.traffic) else len(self.traffic) - 1  ###更改其中的1可改变路况变化速率
-        # self.client.publish(
-        #     '/smartcar/final/' + self.comboBox_team.currentText() +
-        #     '/position', bytes(str(self.x) + ' ' + str(self.y), 'utf-8'))
+
+        self.current_traffic = math.floor(self.second) // 1 if math.floor(self.second) // 1 < len(self.traffic) else len(self.traffic) - 1   ###更改其中的1可改变路况变化速率
+        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes(str(self.x) + ' ' + str(self.y), 'utf-8'))
         # if self.second - math.floor(self.second) < 0.2:
-        #     self.client.publish(
-        #         '/smartcar/final/' + self.comboBox_team.currentText() +
-        #         '/traffic',
-        #         bytes(self.traffic[self.current_traffic].original_data,
-        #               'utf-8'))
+        #     self.client.publish('/smartcar/' + self.comboBox_team.currentText() + '/traffic', bytes(self.traffic[self.current_traffic].original_data, 'utf-8'))
+        
         self.drawall()
+
+    def get_road(self) -> tuple:
+        '''This method is to get the current road on which the car is based on the actual position.
+
+        :return: (start_point_index, end_point_index, dist_from_start_point), all int.
+        '''
 
     def save(self):
         score = open(path + os.sep + 'scores.txt', 'a')
@@ -235,13 +235,16 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             for j in range(self.graph.point_num):
                 if self.graph.line[i][j] != 0:
                     x1 = self.graph.x[i] * self.x_scale + self.width / 35
-                    y1 = (6000 -
-                          self.graph.y[i]) * self.y_scale + self.height / 35
+                    y1 = (6000 - self.graph.y[i]) * self.y_scale + self.height / 35
                     x2 = self.graph.x[j] * self.x_scale + self.width / 35
-                    y2 = (6000 -
-                          self.graph.y[j]) * self.y_scale + self.height / 35
+                    y2 = (6000 - self.graph.y[j]) * self.y_scale + self.height / 35
                     # self.scene.addLine(x1, y1, x2, y2, self.pens[self.traffic[self.current_traffic].line[i][j]])
-                    self.scene.addLine(x1, y1, x2, y2, self.pens[0])  # 绿色笔画道路
+                    self.scene.addLine(x1, y1, x2, y2, QtGui.QPen(
+                        Qt.black,
+                        10,
+                        QtCore.Qt.SolidLine,  # 颜色数字
+                        QtCore.Qt.RoundCap,
+                        QtCore.Qt.RoundJoin))   #去掉路况后用黑色线画地图
 
         ###画小车
         # car_postition(x, y)  # 获取小车坐标
@@ -253,16 +256,10 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
                               self.brush_car)
 
         ###画起终点
-        start_x = self.graph.x[
-            self.
-            depart_point] * self.x_scale + self.width / 35 - self.circle_size / 2
-        start_y = (6000 - self.graph.y[self.depart_point]
-                   ) * self.y_scale + self.height / 35 - self.circle_size / 2
-        end_x = self.graph.x[
-            self.
-            arrive_point] * self.x_scale + self.width / 35 - self.circle_size / 2
-        end_y = (6000 - self.graph.y[self.arrive_point]
-                 ) * self.y_scale + self.height / 35 - self.circle_size / 2
+        start_x = self.graph.x[self.depart_point] * self.x_scale + self.width / 35 - self.circle_size / 2
+        start_y = (6000 - self.graph.y[self.depart_point]) * self.y_scale + self.height / 35 - self.circle_size / 2
+        end_x = self.graph.x[self.arrive_point] * self.x_scale + self.width / 35 - self.circle_size / 2
+        end_y = (6000 - self.graph.y[self.arrive_point]) * self.y_scale + self.height / 35 - self.circle_size / 2
         self.scene.addEllipse(start_x, start_y, self.circle_size,
                               self.circle_size, self.pen_start_point,
                               self.brush_start)
@@ -290,7 +287,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
 
 
 class DialogUi_Point(Ui_Dialog_Team, QtBaseClass_Dialog_Point):
-    def __init__(self):
+    def __init__(self, client, team):
         QtBaseClass_Dialog_Point.__init__(self)
         Ui_Dialog_Team.__init__(self)
         self.setupUi(self)
@@ -300,6 +297,9 @@ class DialogUi_Point(Ui_Dialog_Team, QtBaseClass_Dialog_Point):
         self.pushButton.setEnabled(False)
         self.start_point.textChanged[str].connect(self.start_point_set)
         self.end_point.textChanged[str].connect(self.end_point_set)
+
+        self.client = client
+        self.topic = '/smartcar/' + team + '/task'
 
     def start_point_set(self, text):
         if text != '':
@@ -316,10 +316,11 @@ class DialogUi_Point(Ui_Dialog_Team, QtBaseClass_Dialog_Point):
     def get(self):
         self.s_point = int(self.start_point.text())
         self.e_point = int(self.end_point.text())
+        self.client.publish(self.topic, qos=1, payload=bytes([self.s_point, self.e_point]))
         self.accept()
 
     def get_point(self):
-        return (self.s_point, self.e_point)
+        return self.s_point, self.e_point
 
 
 class RcUi(Ui_rc, QtBaseClass_rc):
@@ -332,6 +333,8 @@ class RcUi(Ui_rc, QtBaseClass_rc):
         self.client = client
         self.topic = '/smartcar/' + team + '/rccontrol'
         self.control_flag = False
+        self.smoothcontrol_flag = False
+        self.smoothcontrol_thread = None
         self.slider_speed.setEnabled(False)
         self.slider_radius.setEnabled(False)
         self.setFocusPolicy(Qt.ClickFocus)
@@ -341,55 +344,50 @@ class RcUi(Ui_rc, QtBaseClass_rc):
     def keyPressEvent(self, event):
         if not event.isAutoRepeat():
             if event.text() == 'w' and not self.control_flag:
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/forward.jpg);')
+                self.icon.setStyleSheet('border-image: url(:/background/images/forward.jpg);')
                 self.client.publish(self.topic, 'forward')
             elif event.text() == 's' and not self.control_flag:
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/backward.jpg);')
+                self.icon.setStyleSheet('border-image: url(:/background/images/backward.jpg);')
                 self.client.publish(self.topic, 'backward')
             elif event.text() == 'a' and not self.control_flag:
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/left.jpg);')
+                self.icon.setStyleSheet('border-image: url(:/background/images/left.jpg);')
                 self.client.publish(self.topic, 'left')
             elif event.text() == 'd' and not self.control_flag:
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/right.jpg);')
+                self.icon.setStyleSheet('border-image: url(:/background/images/right.jpg);')
                 self.client.publish(self.topic, 'right')
-            elif event.text() == 'e':
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/clockwise.jpg);')
+            elif event.text() == 'e': 
+                self.icon.setStyleSheet('border-image: url(:/background/images/clockwise.jpg);')
                 self.client.publish(self.topic, 'clockwise')
             elif event.text() == 'q':
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/anticlockwise.jpg);'
-                )
+                self.icon.setStyleSheet('border-image: url(:/background/images/anticlockwise.jpg);')
                 self.client.publish(self.topic, 'anti-clockwise')
 
-            elif event.text() == 'w' and self.control_flag:
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/forward.jpg);')
-                self.client.publish(self.topic,
-                                    'forward' + str(self.slider_speed.value()))
-            elif event.text() == 's' and self.control_flag:
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/backward.jpg);')
-                self.client.publish(
-                    self.topic, 'backward' + str(self.slider_speed.value()))
-            elif event.text() == 'a' and self.control_flag:
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/left.jpg);')
-                self.client.publish(self.topic,
-                                    'left' + str(self.slider_radius.value()))
-            elif event.text() == 'd' and self.control_flag:
-                self.icon.setStyleSheet(
-                    'border-image: url(:/background/images/right.jpg);')
-                self.client.publish(self.topic,
-                                    'right' + str(self.slider_radius.value()))
+            elif event.text() == 'w'and self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/forward.jpg);')
+                self.client.publish(self.topic, 'forward' + str(self.slider_speed.value()))
+            elif event.text() == 's'and self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/backward.jpg);')
+                self.client.publish(self.topic, 'backward' + str(self.slider_speed.value()))
+            elif event.text() == 'a'and self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/left.jpg);')
+                self.client.publish(self.topic, 'left' + str(self.slider_radius.value()))
+            elif event.text() == 'd'and self.control_flag:
+                self.icon.setStyleSheet('border-image: url(:/background/images/right.jpg);')
+                self.client.publish(self.topic, 'right' + str(self.slider_radius.value()))
             elif event.text() == 'f':
                 self.control_flag = not self.control_flag
                 self.slider_speed.setEnabled(self.control_flag)
                 self.slider_radius.setEnabled(self.control_flag)
+            elif event.text() == 'g':
+                if not self.smoothcontrol_flag:
+                    self.smoothcontrol_flag = True
+                    self.smoothcontrol_thread = threading.Thread(target=self.smoothcontrol, daemon=True)
+                    self.smoothcontrol_thread.start()
+                else:
+                    self.smoothcontrol_flag = False
+                    if threading.current_thread() != self.smoothcontrol_thread:
+                        self.smoothcontrol_thread.join()
+                        self.smoothcontrol_thread = None
             elif event.text() == '1':
                 self.client.publish(self.topic, 'other1')
             elif event.text() == '2':
@@ -399,9 +397,14 @@ class RcUi(Ui_rc, QtBaseClass_rc):
 
     def keyReleaseEvent(self, event):
         if not event.isAutoRepeat():
-            self.icon.setStyleSheet(
-                'border-image: url(:/background/images/stop.jpg);')
+            self.icon.setStyleSheet('border-image: url(:/background/images/stop.jpg);')
             self.client.publish(self.topic, 'stop')
+
+    def smoothcontrol(self):
+        while self.smoothcontrol_flag:
+            self.client.publish(self.topic, 'motor-left' + str(self.slider_speed.value()))
+            self.client.publish(self.topic, 'motor-right' + str(self.slider_radius.value()))
+            time.sleep(0.1)
 
 
 if __name__ == '__main__':

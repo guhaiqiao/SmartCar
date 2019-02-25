@@ -2,21 +2,22 @@
 #  此模块包含读取外部数据文件的相关类
 ########################
 
-class Graph():
+
+class Graph:
     def __init__(self):
         self.x = []
         self.y = []
         self.line = []
+        self.point_num = 0
 
     def read(self, file):
         self.line = []
         f = open(file, 'r')
         info = f.readlines()
         self.point_num = len(info)
-        for i in range(0, self.point_num):
-            line = []
-            for k in range(0, self.point_num):
-                line.append(0)
+        for i in range(self.point_num):
+            line = [0 for _ in range(self.point_num)]
+
             if i != (len(info) - 1):
                 info[i] = info[i][:-1]
             info[i] = [int(x) for x in info[i].split()]
@@ -26,7 +27,8 @@ class Graph():
                 line[j - 1] = 1
             self.line.append(line)
 
-class Traffic():
+
+class Traffic:
     def __init__(self, point_num=0):
         self.line = []
         self.original_data = ''
@@ -52,12 +54,15 @@ class Traffic():
                 line[lines[i][j] - 1] = lines[i][j + 1]
             self.line.append(line)
 
-class Team():
+
+class Team:
     def __init__(self):
         self.team_names = []
+        self.team_macs = []
 
     def read(self, file):
         f = open(file)
         for name in f:
-            self.team_names.append(name.strip('\n'))
+            self.team_names.append(name.strip('\n').split(' ')[0])
+            self.team_macs.append(name.strip('\n').split(' ')[1])
         f.close()

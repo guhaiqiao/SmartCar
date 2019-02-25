@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>485</width>
-    <height>380</height>
+    <width>551</width>
+    <height>396</height>
    </rect>
   </property>
   <property name="font">
@@ -29,7 +29,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>C:/Users/10199/Pictures/logo.jpg</normaloff>C:/Users/10199/Pictures/logo.jpg</iconset>
+    <normaloff>../../../../../../10199/Pictures/logo.jpg</normaloff>../../../../../../10199/Pictures/logo.jpg</iconset>
   </property>
   <property name="autoFillBackground">
    <bool>true</bool>
@@ -68,7 +68,8 @@
        <string notr="true">background:transparent</string>
       </property>
       <property name="text">
-       <string>第xx届工程物理系智能车大赛</string>
+       <string>“Momenta杯”
+清华大学第十三届智能车大赛</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
@@ -187,6 +188,25 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton_connect">
+          <property name="font">
+           <font>
+            <family>等线</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(130, 147, 201, 100);</string>
+          </property>
+          <property name="text">
+           <string>连接</string>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="pushButton_point">
           <property name="font">
            <font>
@@ -210,7 +230,7 @@
           </property>
          </widget>
         </item>
-        <!-- <item>
+        <item>
          <widget class="QPushButton" name="pushButton_traffic">
           <property name="font">
            <font>
@@ -225,25 +245,6 @@
           </property>
           <property name="text">
            <string>载入路况</string>
-          </property>
-          <property name="flat">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item> -->
-        <item>
-         <widget class="QPushButton" name="pushButton_connect">
-          <property name="font">
-           <font>
-            <family>等线</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: rgb(130, 147, 201, 100);</string>
-          </property>
-          <property name="text">
-           <string>连接</string>
           </property>
           <property name="flat">
            <bool>false</bool>
