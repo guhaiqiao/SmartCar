@@ -41,6 +41,9 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.init_vars()
         self.init_ui()
 
+        self.positioning = positioning.VisionPositioning()
+        self.positioning.begin_track()
+
     def init_vars(self):
         #初始化计时器
         self.Timer = QtCore.QTimer()  # 计时器
@@ -208,6 +211,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.time_display = self.time_display[:self.time_display.find('.') + 2]
         self.TimeCounter.display(self.time_display)
 
+        self.x, self.y = self.positioning.get_position()
         self.current_traffic = math.floor(self.second) // 1 if math.floor(self.second) // 1 < len(self.traffic) else len(self.traffic) - 1   ###更改其中的1可改变路况变化速率
         self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes(str(self.x) + ' ' + str(self.y), 'utf-8'))
         # if self.second - math.floor(self.second) < 0.2:
@@ -247,9 +251,8 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
                         QtCore.Qt.RoundJoin))   #去掉路况后用黑色线画地图
 
         ###画小车
-        # car_postition(x, y)  # 获取小车坐标
-        self.x = 1000 + 500 * math.cos(self.second)
-        self.y = 1000 + 500 * math.sin(self.second)
+        # self.x = 1000 + 500 * math.cos(self.second)   #模拟生成位置
+        # self.y = 1000 + 500 * math.sin(self.second)
         x = self.x * self.x_scale + self.width / 35 - self.carsize / 20
         y = self.y * self.y_scale + self.height / 35 - self.carsize / 20
         self.scene.addEllipse(x, y, self.carsize, self.carsize, self.pen_car,
