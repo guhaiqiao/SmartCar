@@ -1,8 +1,6 @@
 ########################
 #  道路吸附算法
 ########################
-import extdata
-import os
 import math
 
 
@@ -14,7 +12,7 @@ class Point:
     def cal_dis(self, point):  # 两点间距离
         dx = self.x - point.x
         dy = self.y - point.y
-        return math.sqrt(dx ** 2 + dy ** 2)
+        return math.sqrt(dx**2 + dy**2)
 
 
 class Line:
@@ -30,19 +28,19 @@ class Line:
 
     def cal_distance(self, point):  # 计算点到线段距离
         l_s = Line(self.start, point)
-        flag = self.cal_dot(l_s) / (self.length ** 2)
+        flag = self.cal_dot(l_s) / (self.length**2)
         if flag > 1:
             return self.end.cal_dis(point)
         elif flag < 0:
             return self.start.cal_dis(point)
         else:
             cos = self.cal_dot(l_s) / self.length / l_s.length
-            sin = math.sqrt(1 - cos ** 2)
+            sin = math.sqrt(1 - cos**2)
             return l_s.length * sin
 
     def projection(self, point):  # 返回点在线段上的投影坐标
         l_s = Line(self.start, point)
-        flag = self.cal_dot(l_s) / (self.length ** 2)
+        flag = self.cal_dot(l_s) / (self.length**2)
         if flag > 1:
             return self.end.x, self.end.y
         elif flag < 0:

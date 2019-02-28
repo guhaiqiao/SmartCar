@@ -42,6 +42,9 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.init_vars()
         self.init_ui()
 
+        self.positioning = positioning.VisionPositioning()
+        self.positioning.begin_track()
+
     def init_vars(self):
         # 初始化计时器
         self.Timer = QtCore.QTimer()  # 计时器
@@ -234,14 +237,9 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.time_display = self.time_display[:self.time_display.find('.') + 2]
         self.TimeCounter.display(self.time_display)
 
-        self.current_traffic = math.floor(
-            self.second) // 1 if math.floor(self.second) // 1 < len(
-                self.traffic) else len(self.traffic) - 1  ###更改其中的1可改变路况变化速率
-        self.client.publish(
-            '/smartcar/' + self.team.team_macs[self.team.team_names.index(
-                self.comboBox_team.currentText())] + '/position',
-            bytes(str(self.x) + ' ' + str(self.y), 'utf-8'))
-
+        self.x, self.y = self.positioning.get_position()
+        self.current_traffic = math.floor(self.second) // 1 if math.floor(self.second) // 1 < len(self.traffic) else len(self.traffic) - 1   ###更改其中的1可改变路况变化速率
+        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes(str(self.x) + ' ' + str(self.y), 'utf-8'))
         # if self.second - math.floor(self.second) < 0.2:
         #     self.client.publish('/smartcar/' +
         # self.comboBox_team.currentText() + '/traffic',
