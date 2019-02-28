@@ -1,0 +1,6 @@
+Frame size: (640, 480)
+
+Point 1 (upper left): (36, 121)
+Point 2 (upper right): (639, 0)
+Point 3 (lower right): (562, 371)
+Point 4 (lower left): (0, 479)
