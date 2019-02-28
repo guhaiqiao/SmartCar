@@ -51,7 +51,7 @@ class Line:
         return x_pro, y_pro
 
 
-def absorp(x, y, map):
+def absorp(x, y, map, start_point, end_point):
     car = Point(x, y)
     lines = []
     dis = []
@@ -64,4 +64,15 @@ def absorp(x, y, map):
     for line in lines:
         dis.append((int)(line.cal_distance(car)))
     nearest = lines[dis.index(min(dis))]
-    return nearest.projection(car)
+    car.x, car.y = nearest.projection(car)
+    for i in range(map.point_num):
+        if map.x[i] == nearest.start.x and map.y[i] == nearest.start.y:
+            start_num = i + 1
+            break
+    for i in range(map.point_num):
+        if map.x[i] == nearest.end.x and map.y[i] == nearest.end.y:
+            end_num = i + 1
+            break
+    s = car.cal_dis(start_point)
+    info = str(start_num) + str(" ") + str(end_num) + str(" ") + str(s) + str(" ") +  str(car.x) + str(" ") + str(car.y)
+    return info
