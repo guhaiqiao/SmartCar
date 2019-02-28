@@ -17,23 +17,27 @@ class VisionPositioning:
 
         # set up the ROI for tracking
         roi = cv.imread('car.jpg')
-        hsv_roi =  cv.cvtColor(roi, cv.COLOR_BGR2HSV)
-        mask = cv.inRange(hsv_roi, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
-        roi_hist = cv.calcHist([hsv_roi], [0, 1], mask, [180, 256], [0, 180, 0, 256])
-        cv.normalize(roi_hist,roi_hist,0,255,cv.NORM_MINMAX)
+        hsv_roi = cv.cvtColor(roi, cv.COLOR_BGR2HSV)
+        mask = cv.inRange(hsv_roi, np.array((0., 60., 32.)),
+                          np.array((180., 255., 255.)))
+        roi_hist = cv.calcHist([hsv_roi], [0, 1], mask, [180, 256],
+                               [0, 180, 0, 256])
+        cv.normalize(roi_hist, roi_hist, 0, 255, cv.NORM_MINMAX)
 
         # setup initial location of window
-        r,h,c,w = 590,100,172,200  # simply hardcoded the values
-        track_window = (c,r,w,h)
+        r, h, c, w = 590, 100, 172, 200  # simply hardcoded the values
+        track_window = (c, r, w, h)
 
-        # Setup the termination criteria, either 10 iteration or move by atleast 1 pt
-        term_crit = ( cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 1 )
+        # Setup the termination criteria, either 10 iteration or move by
+        # atleast 1 pt
+        term_crit = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 1)
 
         while self.track_flag:
             ret, frame = cap.read()
             if ret:
                 hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-                dst = cv.calcBackProject([hsv],[0,1],roi_hist,[0,180,0,256],1)
+                dst = cv.calcBackProject([hsv], [0, 1], roi_hist,
+                                         [0, 180, 0, 256], 1)
                 # Now convolute with circular disc
                 disc = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
                 cv.filter2D(dst, -1, disc, dst)
@@ -44,8 +48,10 @@ class VisionPositioning:
                 # Draw it on image
                 pts = cv.boxPoints(ret)
                 pts = np.int0(pts)
-                self.x = (pts[0][0] + pts[1][0]) // 2 + (pts[2][0] - pts[1][0]) // 2
-                self.y = (pts[0][1] + pts[1][1]) // 2 + (pts[2][1] - pts[1][1]) // 2
+                self.x = (pts[0][0] + pts[1][0]) // 2 + (
+                    pts[2][0] - pts[1][0]) // 2
+                self.y = (pts[0][1] + pts[1][1]) // 2 + (
+                    pts[2][1] - pts[1][1]) // 2
         cap.release()
 
     def begin_track(self):
@@ -62,6 +68,7 @@ class VisionPositioning:
     def get_position(self):
         return self.x, self.y
 
+
 if __name__ == '__main__':
     cap = cv.VideoCapture('test_positioning.mp4')
     # fourcc = cv.VideoWriter_fourcc(*'XVID')
@@ -70,22 +77,26 @@ if __name__ == '__main__':
     # set up the ROI for tracking
     roi = cv.imread('car.jpg')
     hsv_roi = cv.cvtColor(roi, cv.COLOR_BGR2HSV)
-    mask = cv.inRange(hsv_roi, np.array((0., 60., 32.)), np.array((180., 255., 255.)))
-    roi_hist = cv.calcHist([hsv_roi], [0, 1], mask, [180, 256], [0, 180, 0, 256])
+    mask = cv.inRange(hsv_roi, np.array((0., 60., 32.)),
+                      np.array((180., 255., 255.)))
+    roi_hist = cv.calcHist([hsv_roi], [0, 1], mask, [180, 256],
+                           [0, 180, 0, 256])
     cv.normalize(roi_hist, roi_hist, 0, 255, cv.NORM_MINMAX)
 
     # setup initial location of window
     r, h, c, w = 590, 100, 172, 200  # simply hardcoded the values
     track_window = (c, r, w, h)
 
-    # Setup the termination criteria, either 10 iteration or move by atleast 1 pt
+    # Setup the termination criteria, either 10 iteration or move by
+    # atleast 1 pt
     term_crit = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 1)
 
     while True:
         ret, frame = cap.read()
         if ret:
             hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-            dst = cv.calcBackProject([hsv], [0, 1], roi_hist, [0, 180, 0, 256], 1)
+            dst = cv.calcBackProject([hsv], [0, 1], roi_hist, [0, 180, 0, 256],
+                                     1)
             # Now convolute with circular disc
             disc = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
             cv.filter2D(dst, -1, disc, dst)
@@ -96,8 +107,10 @@ if __name__ == '__main__':
             # Draw it on image
             pts = cv.boxPoints(ret)
             pts = np.int0(pts)
-            center_x = (pts[0][0] + pts[1][0]) // 2 + (pts[2][0] - pts[1][0]) // 2
-            center_y = (pts[0][1] + pts[1][1]) // 2 + (pts[2][1] - pts[1][1]) // 2
+            center_x = (pts[0][0] + pts[1][0]) // 2 + (
+                pts[2][0] - pts[1][0]) // 2
+            center_y = (pts[0][1] + pts[1][1]) // 2 + (
+                pts[2][1] - pts[1][1]) // 2
             img2 = cv.polylines(frame, [pts], True, 255, 2)
             img2 = cv.circle(img2, (center_x, center_y), 10, (0, 0, 255))
             # out.write(img2)

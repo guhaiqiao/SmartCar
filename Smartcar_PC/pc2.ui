@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>551</width>
-    <height>396</height>
+    <width>782</width>
+    <height>549</height>
    </rect>
   </property>
   <property name="font">
@@ -29,7 +29,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../../../../../../10199/Pictures/logo.jpg</normaloff>../../../../../../10199/Pictures/logo.jpg</iconset>
+    <normaloff>../../../../../10199/Pictures/logo.jpg</normaloff>../../../../../10199/Pictures/logo.jpg</iconset>
   </property>
   <property name="autoFillBackground">
    <bool>true</bool>
@@ -49,10 +49,10 @@
      <widget class="QLabel" name="Title">
       <property name="font">
        <font>
-        <family>微软雅黑</family>
+        <family>Constantia</family>
         <pointsize>20</pointsize>
-        <weight>50</weight>
-        <bold>false</bold>
+        <weight>75</weight>
+        <bold>true</bold>
        </font>
       </property>
       <property name="statusTip">
@@ -77,7 +77,7 @@
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="6,0">
+     <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="6,1">
       <item>
        <widget class="QGraphicsView" name="Map">
         <property name="autoFillBackground">
@@ -114,6 +114,13 @@
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,1">
           <item>
            <widget class="QLCDNumber" name="TimeCounter">
+            <property name="font">
+             <font>
+              <family>Constantia</family>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
             </property>
@@ -135,10 +142,10 @@
            <widget class="QLabel" name="label">
             <property name="font">
              <font>
-              <family>等线</family>
+              <family>Constantia</family>
               <pointsize>16</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
+              <weight>75</weight>
+              <bold>true</bold>
              </font>
             </property>
             <property name="text">
@@ -168,11 +175,24 @@
          <widget class="QComboBox" name="comboBox_team">
           <property name="font">
            <font>
-            <family>等线</family>
+            <family>Constantia</family>
             <pointsize>10</pointsize>
-            <weight>50</weight>
-            <bold>false</bold>
+            <weight>75</weight>
+            <italic>true</italic>
+            <bold>true</bold>
+            <underline>false</underline>
+            <strikeout>false</strikeout>
+            <kerning>true</kerning>
            </font>
+          </property>
+          <property name="mouseTracking">
+           <bool>false</bool>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::DefaultContextMenu</enum>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(130, 147, 201, 100);</string>
@@ -191,8 +211,10 @@
          <widget class="QPushButton" name="pushButton_connect">
           <property name="font">
            <font>
-            <family>等线</family>
+            <family>Constantia</family>
             <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
            </font>
           </property>
           <property name="styleSheet">
@@ -210,10 +232,10 @@
          <widget class="QPushButton" name="pushButton_point">
           <property name="font">
            <font>
-            <family>等线</family>
+            <family>Constantia</family>
             <pointsize>10</pointsize>
-            <weight>50</weight>
-            <bold>false</bold>
+            <weight>75</weight>
+            <bold>true</bold>
            </font>
           </property>
           <property name="cursor">
@@ -234,10 +256,10 @@
          <widget class="QPushButton" name="pushButton_traffic">
           <property name="font">
            <font>
-            <family>等线</family>
+            <family>Constantia</family>
             <pointsize>10</pointsize>
-            <weight>50</weight>
-            <bold>false</bold>
+            <weight>75</weight>
+            <bold>true</bold>
            </font>
           </property>
           <property name="styleSheet">
@@ -270,10 +292,10 @@
            <widget class="QPushButton" name="pushButton_start">
             <property name="font">
              <font>
-              <family>等线</family>
+              <family>Constantia</family>
               <pointsize>12</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
+              <weight>75</weight>
+              <bold>true</bold>
              </font>
             </property>
             <property name="styleSheet">
@@ -304,11 +326,11 @@
            <widget class="QPushButton" name="pushButton_end">
             <property name="font">
              <font>
-              <family>等线</family>
+              <family>Constantia</family>
               <pointsize>12</pointsize>
-              <weight>50</weight>
+              <weight>75</weight>
               <italic>false</italic>
-              <bold>false</bold>
+              <bold>true</bold>
               <kerning>true</kerning>
              </font>
             </property>
