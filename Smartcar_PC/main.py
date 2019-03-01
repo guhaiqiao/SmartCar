@@ -213,8 +213,9 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.TimeCounter.display(self.time_display)
 
         self.x, self.y = self.positioning.get_position()
+        start_num, end_num, dist = absorp.absorp(self.x, self.y, self.graph)
         self.current_traffic = math.floor(self.second) // 1 if math.floor(self.second) // 1 < len(self.traffic) else len(self.traffic) - 1   ###更改其中的1可改变路况变化速率
-        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes(str(self.x) + ' ' + str(self.y), 'utf-8'))
+        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes(str(start_num) + ' ' + str(end_num) + ' ' + str(dist) + ' ' + str(self.x) + ' ' + str(self.y), 'utf-8'))
         # if self.second - math.floor(self.second) < 0.2:
         #     self.client.publish('/smartcar/' + self.comboBox_team.currentText() + '/traffic', bytes(self.traffic[self.current_traffic].original_data, 'utf-8'))
         

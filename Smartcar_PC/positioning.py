@@ -29,6 +29,9 @@ class VisionPositioning:
             cv.VideoCapture(int(self.cameras['1']['camera'])),
             cv.VideoCapture(int(self.cameras['2']['camera'])),
             cv.VideoCapture(int(self.cameras['3']['camera']))]
+        for cap in self.capture:
+            cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+            cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
 
     # 旋转图像
     def rotate(self, image, angle, center=None, scale=1.0):
@@ -42,17 +45,13 @@ class VisionPositioning:
     # 获取一个相机的标准化视野
     def getCapture(self, x):
         camera = self.cameras[str(x)]
-        w1 = int(camera['w1'])
-        w2 = int(camera['w2'])
-        h = int(camera['h'])
+        src_points = camera['srcPoints'].split(' ')
+        src_points = np.array([int(i) for i in src_points], np.float32).reshape(4, 2)
         ret, frame = self.capture[x].read()
-        srcPoints = np.array([[320 - w2, 480 - h], [320 + w2, 480 - h], [320 - w1, 480], [320 + w1, 480]],
+        dst_points = np.array([[0, 0], [300, 0], [300, 300], [0, 300]],
                              dtype="float32")
-        dstPoints = np.array([[320 - w1, 480 - h], [320 + w1, 480 - h], [320 - w1, 480], [320 + w1, 480]],
-                             dtype="float32")
-        perspectiveMatrix = cv.getPerspectiveTransform(dstPoints, srcPoints)
-        return cv.resize(cv.warpPerspective(frame, perspectiveMatrix, (640, 480)), (300, 300),
-                         interpolation=cv.INTER_CUBIC)
+        perspectiveMatrix = cv.getPerspectiveTransform(src_points, dst_points)
+        return cv.warpPerspective(frame, perspectiveMatrix, (300, 300))
 
     # 拼接形成整个视野
     def getSight(self):
@@ -82,8 +81,9 @@ class VisionPositioning:
             mask = cv.erode(mask, None, iterations=2)
             mask = cv.dilate(mask, None, iterations=2)
             hsv = cv.bitwise_and(hsv, hsv, mask=mask)
-            cv.imshow('', cv.cvtColor(hsv, cv.COLOR_HSV2BGR))
+            cv.imshow('Ranged Image', cv.resize(cv.cvtColor(hsv, cv.COLOR_HSV2BGR), None, fx=3, fy=3, interpolation=cv.INTER_CUBIC))
             dst = cv.calcBackProject([hsv],[0,1],roi_hist,[0,180,0,256],1)
+
             # Now convolute with circular disc
             disc = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
             cv.filter2D(dst, -1, disc, dst)
@@ -98,8 +98,8 @@ class VisionPositioning:
             self.y = (pts[0][1] + pts[1][1]) // 2 + (pts[2][1] - pts[1][1]) // 2
             img2 = cv.polylines(frame, [pts], True, 255, 2)
             img2 = cv.circle(img2, (self.x, self.y), 10, (0, 0, 255))
-            cv.imshow('img2', img2)
-            cv.imshow('backpro', dst)
+            cv.imshow('Original Image', cv.resize(img2, None, fx=3, fy=3, interpolation=cv.INTER_CUBIC))
+            cv.imshow('Backprojection Image', cv.resize(dst, None, fx=3, fy=3, interpolation=cv.INTER_CUBIC))
             k = cv.waitKey(60) & 0xff
             if k == 27:
                 break

@@ -51,7 +51,14 @@ class Line:
         return x_pro, y_pro
 
 
-def absorp(x, y, map, start_point, end_point):
+def absorp(x: int, y: int, map) -> tuple:
+    '''
+
+    :param x: car's actual x position
+    :param y: car's actual y position
+    :param map: map data
+    :return: tuple, (start_num, end_num, distance from the start of the road)
+    '''
     car = Point(x, y)
     lines = []
     dis = []
@@ -65,6 +72,8 @@ def absorp(x, y, map, start_point, end_point):
         dis.append((int)(line.cal_distance(car)))
     nearest = lines[dis.index(min(dis))]
     car.x, car.y = nearest.projection(car)
+
+    # Get the index of the start and the end of the road
     for i in range(map.point_num):
         if map.x[i] == nearest.start.x and map.y[i] == nearest.start.y:
             start_num = i + 1
@@ -73,6 +82,13 @@ def absorp(x, y, map, start_point, end_point):
         if map.x[i] == nearest.end.x and map.y[i] == nearest.end.y:
             end_num = i + 1
             break
+    if start_num > end_num:
+        t = start_num
+        start_num = end_num
+        end_num = t
+
+    # Calculate the distance from the start of the road
+    start_point = Point(map.x[start_num - 1], map.y[start_num - 1])
     s = car.cal_dis(start_point)
-    info = str(start_num) + str(" ") + str(end_num) + str(" ") + str(s) + str(" ") +  str(car.x) + str(" ") + str(car.y)
-    return info
+
+    return start_num, end_num, s
