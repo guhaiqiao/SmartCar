@@ -25,6 +25,8 @@ class Panel(ui_panel, QtBaseClass_panel):
         self.frame_width = 0
         self.frame_height = 0
         self.cap = cv.VideoCapture(0)
+        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
 
         while not self.init_frame():
             pass
@@ -86,13 +88,13 @@ class Panel(ui_panel, QtBaseClass_panel):
 
             ret, img = self.cap.read()
             if ret:
-                img2 = cv.polylines(img.copy(), np.array(self.point_position, np.int32).reshape((1,-1,2)), True, (255, 255, 255), 2)
+                img2 = cv.polylines(img.copy(), np.array(self.point_position, np.int32).reshape((1,-1,2)), True, (255, 255, 255), 1)
 
                 perspectiveMatrix = cv.getPerspectiveTransform(np.array(self.point_position, np.float32), np.array([[0, 0], [600, 0], [600, 600], [0, 600]], np.float32))
                 img3 = cv.warpPerspective(img, perspectiveMatrix, (600, 600))
 
-                cv.imshow('Original Image', img2)
-                cv.imshow('Transformed Image', img3)
+                cv.imshow('Original Image', cv.resize(img2, None, fx=1, fy=1, interpolation=cv.INTER_CUBIC))
+                cv.imshow('Transformed Image', cv.resize(img3, None, fx=1, fy=1, interpolation=cv.INTER_CUBIC))
                 k = cv.waitKey(1) & 0xff
                 if k == 27:
                     break
