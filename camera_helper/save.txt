@@ -1,6 +1,6 @@
-Frame size: (640, 480)
+Frame size: (1920, 1080)
 
-Point 1 (upper left): (36, 121)
-Point 2 (upper right): (639, 0)
-Point 3 (lower right): (562, 371)
-Point 4 (lower left): (0, 479)
+Point 1 (upper left): (510, 107)
+Point 2 (upper right): (1333, 104)
+Point 3 (lower right): (1572, 854)
+Point 4 (lower left): (178, 840)

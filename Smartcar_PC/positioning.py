@@ -22,6 +22,8 @@ class VisionPositioning:
         self.track_flag = False
         self.x = 0
         self.y = 0
+        self.factor = 2   # final image size: 2 * 300 * factor
+        self.initial_position = [590, 100, 172, 200]
         settings_file = open('./cameraModule.json')
         self.cameras = json.load(settings_file)
         self.capture = [
@@ -48,10 +50,10 @@ class VisionPositioning:
         src_points = camera['srcPoints'].split(' ')
         src_points = np.array([int(i) for i in src_points], np.float32).reshape(4, 2)
         ret, frame = self.capture[x].read()
-        dst_points = np.array([[0, 0], [300, 0], [300, 300], [0, 300]],
+        dst_points = np.array([[0, 0], [300 * self.factor, 0], [300 * self.factor, 300 * self.factor], [0, 300 * self.factor]],
                              dtype="float32")
         perspectiveMatrix = cv.getPerspectiveTransform(src_points, dst_points)
-        return cv.warpPerspective(frame, perspectiveMatrix, (300, 300))
+        return cv.warpPerspective(frame, perspectiveMatrix, (300 * self.factor, 300 * self.factor))
 
     # 拼接形成整个视野
     def getSight(self):
@@ -67,7 +69,7 @@ class VisionPositioning:
         cv.normalize(roi_hist,roi_hist,0,255,cv.NORM_MINMAX)
 
         # setup initial location of window
-        r,h,c,w = 590,100,172,200  # simply hardcoded the values
+        r,h,c,w = self.initial_position  # simply hardcoded the values
         track_window = (c,r,w,h)
 
         # Setup the termination criteria, either 10 iteration or move by atleast 1 pt
@@ -81,7 +83,7 @@ class VisionPositioning:
             mask = cv.erode(mask, None, iterations=2)
             mask = cv.dilate(mask, None, iterations=2)
             hsv = cv.bitwise_and(hsv, hsv, mask=mask)
-            cv.imshow('Ranged Image', cv.resize(cv.cvtColor(hsv, cv.COLOR_HSV2BGR), None, fx=3, fy=3, interpolation=cv.INTER_CUBIC))
+            cv.imshow('Ranged Image', cv.resize(cv.cvtColor(hsv, cv.COLOR_HSV2BGR), None, fx=1.5 / self.factor, fy=1.5 / self.factor, interpolation=cv.INTER_CUBIC))
             dst = cv.calcBackProject([hsv],[0,1],roi_hist,[0,180,0,256],1)
 
             # Now convolute with circular disc
@@ -98,13 +100,12 @@ class VisionPositioning:
             self.y = (pts[0][1] + pts[1][1]) // 2 + (pts[2][1] - pts[1][1]) // 2
             img2 = cv.polylines(frame, [pts], True, 255, 2)
             img2 = cv.circle(img2, (self.x, self.y), 10, (0, 0, 255))
-            cv.imshow('Original Image', cv.resize(img2, None, fx=3, fy=3, interpolation=cv.INTER_CUBIC))
-            cv.imshow('Backprojection Image', cv.resize(dst, None, fx=3, fy=3, interpolation=cv.INTER_CUBIC))
+            cv.imshow('Original Image', cv.resize(img2, None, fx=1.5 / self.factor, fy=1.5 / self.factor, interpolation=cv.INTER_CUBIC))
+            cv.imshow('Backprojection Image', cv.resize(dst, None, fx=1.5 / self.factor, fy=1.5 / self.factor, interpolation=cv.INTER_CUBIC))
             k = cv.waitKey(60) & 0xff
             if k == 27:
                 break
 
-        cap.release()
         cv.destroyAllWindows()
 
     def begin_track(self):

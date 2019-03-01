@@ -80,7 +80,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.score = '0'
 
         #初始化小车信息
-        self.x = 0
+        self.x = 0   # unit: mm
         self.y = 0
         self.carsize = 20
 
@@ -140,6 +140,15 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             self.depart_point, self.arrive_point = point_choose_dialog.get_point()
             self.pushButton_point.setText('起点:' + str(self.depart_point) +
                                           ' 终点:' + str(self.arrive_point))
+            
+            self.positioning.stop_track()
+            self.positioning.initial_position = [(6000 - self.graph.y[self.depart_point - 1]) * self.positioning.factor, 
+                                                200, 
+                                                self.graph.x[self.depart_point - 1] * self.positioning.factor, 
+                                                200]
+            print(self.positioning.initial_position)
+            self.positioning.begin_track()
+
             self.drawall()
 
     def connect(self):
@@ -212,7 +221,9 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.time_display = self.time_display[:self.time_display.find('.') + 2]
         self.TimeCounter.display(self.time_display)
 
-        self.x, self.y = self.positioning.get_position()
+        x_img, y_img = self.positioning.get_position()
+        self.x = x_img / self.positioning.factor * 10
+        self.y = y_img / self.positioning.factor * 10
         start_num, end_num, dist = absorp.absorp(self.x, self.y, self.graph)
         self.current_traffic = math.floor(self.second) // 1 if math.floor(self.second) // 1 < len(self.traffic) else len(self.traffic) - 1   ###更改其中的1可改变路况变化速率
         self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes(str(start_num) + ' ' + str(end_num) + ' ' + str(dist) + ' ' + str(self.x) + ' ' + str(self.y), 'utf-8'))
