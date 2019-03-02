@@ -84,6 +84,8 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         #初始化视觉定位信息
         self.positioning = positioning.VisionPositioning()
         self.positioning_flag = False
+        self.positioning_timer = QtCore.QTimer()
+        self.positioning_timer.timeout.connect(self.update_position)
 
     def init_ui(self):
         # self.actionsave.triggered.connect(self.save)
@@ -191,23 +193,12 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
     def positioning_control(self):
         if self.pushButton_positioning.text() == '启动定位':
             self.positioning.begin_track()
-            self.begin_update_position()
+            self.positioning_timer.start(100)
             self.pushButton_positioning.setText('停止定位')
         else:
             self.positioning.stop_track()
-            self.stop_update_position()
+            self.positioning_timer.stop()
             self.pushButton_positioning.setText('启动定位')
-
-    def begin_update_position(self):
-        self.positioning_flag = True
-        self.positioning_thread = threading.Thread(target=self.track, daemon=True)
-        self.positioning_thread.start()
-
-    def stop_update_position(self):
-        self.positioning_flag = False
-        if threading.current_thread() != self.positioning_thread:
-            self.positioning_thread.join()
-            self.positioning_thread = None
 
     def update_position(self):
         x_img, y_img = self.positioning.get_position()
