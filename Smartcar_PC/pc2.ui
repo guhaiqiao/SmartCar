@@ -109,7 +109,7 @@
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout" stretch="5,0,0,0,0,0,8">
+       <layout class="QVBoxLayout" name="verticalLayout" stretch="5,0,0,0,0,0,0,8">
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,1">
           <item>
@@ -249,6 +249,24 @@
           </property>
           <property name="flat">
            <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_positioning">
+          <property name="font">
+           <font>
+            <family>Constantia</family>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(130, 147, 201, 100);</string>
+          </property>
+          <property name="text">
+           <string>启动定位</string>
           </property>
          </widget>
         </item>

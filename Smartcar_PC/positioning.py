@@ -69,7 +69,7 @@ class VisionPositioning:
         cv.normalize(roi_hist,roi_hist,0,255,cv.NORM_MINMAX)
 
         # setup initial location of window
-        r,h,c,w = self.initial_position  # simply hardcoded the values
+        r,h,c,w = self.initial_position
         track_window = (c,r,w,h)
 
         # Setup the termination criteria, either 10 iteration or move by atleast 1 pt
@@ -83,7 +83,7 @@ class VisionPositioning:
             mask = cv.erode(mask, None, iterations=2)
             mask = cv.dilate(mask, None, iterations=2)
             hsv = cv.bitwise_and(hsv, hsv, mask=mask)
-            cv.imshow('Ranged Image', cv.resize(cv.cvtColor(hsv, cv.COLOR_HSV2BGR), None, fx=1.5 / self.factor, fy=1.5 / self.factor, interpolation=cv.INTER_CUBIC))
+            # cv.imshow('Ranged Image', cv.resize(cv.cvtColor(hsv, cv.COLOR_HSV2BGR), None, fx=1.5 / self.factor, fy=1.5 / self.factor, interpolation=cv.INTER_CUBIC))
             dst = cv.calcBackProject([hsv],[0,1],roi_hist,[0,180,0,256],1)
 
             # Now convolute with circular disc

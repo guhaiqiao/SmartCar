@@ -42,9 +42,6 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.init_vars()
         self.init_ui()
 
-        self.positioning = positioning.VisionPositioning()
-        self.positioning.begin_track()
-
     def init_vars(self):
         #初始化计时器
         self.Timer = QtCore.QTimer()  # 计时器
@@ -84,6 +81,10 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.y = 0
         self.carsize = 20
 
+        #初始化视觉定位信息
+        self.positioning = positioning.VisionPositioning()
+        self.positioning_flag = False
+
     def init_ui(self):
         # self.actionsave.triggered.connect(self.save)
         self.pushButton_point.clicked.connect(self.choose_points)
@@ -92,6 +93,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.pushButton_end.setEnabled(False)
         self.pushButton_traffic.clicked.connect(self.traffic_read)
         self.pushButton_connect.clicked.connect(self.connect)
+        self.pushButton_positioning.clicked.connect(self.positioning_control)
 
         self.scene = QtWidgets.QGraphicsScene()
         self.scene.clear()
@@ -134,6 +136,9 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.height = self.Map.height()
         self.drawall()
 
+    ####################
+    # Below are methods about popup dialogs.
+    ####################
     def choose_points(self):
         point_choose_dialog = DialogUi_Point(self.client, self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())])
         if point_choose_dialog.exec_():
@@ -141,16 +146,28 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             self.pushButton_point.setText('起点:' + str(self.depart_point) +
                                           ' 终点:' + str(self.arrive_point))
             
-            self.positioning.stop_track()
-            self.positioning.initial_position = [(6000 - self.graph.y[self.depart_point - 1]) * self.positioning.factor, 
-                                                200, 
-                                                self.graph.x[self.depart_point - 1] * self.positioning.factor, 
+            self.positioning.initial_position = [(6000 - self.graph.y[self.depart_point - 1]) // 10 * self.positioning.factor,
+                                                200,
+                                                self.graph.x[self.depart_point - 1] // 10 * self.positioning.factor,
                                                 200]
-            print(self.positioning.initial_position)
-            self.positioning.begin_track()
+            if self.positioning.track_flag:
+                self.positioning.stop_track()
+                self.positioning.begin_track()
 
             self.drawall()
 
+    def traffic_read(self):
+        dirname = QtWidgets.QFileDialog.getExistingDirectory(self, '请选择载入的路况变化', path)
+        if dirname:
+            self.traffic = []
+            for i in range(200):
+                self.traffic.append(extdata.Traffic())
+                self.traffic[-1].read(dirname + '/' + str(i + 1) + '.txt')
+            self.pushButton_traffic.setText('路况' + dirname.split('/')[-1])
+
+    ####################
+    # Below are methods about mqtt communication.
+    ####################
     def connect(self):
         self.client = mqtt.Client(client_id='SmartcarPC', userdata='SmartcarPC')
         self.client.on_connect = self.on_connect
@@ -168,80 +185,36 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.pushButton_connect.setText('连接')
         self.pushButton_connect.setEnabled(True)
 
-    def start(self):
-        if self.pushButton_start.text() == '开始':
-            self.Timer.start(100)
-            self.score = '0'
-            self.time_init = time.perf_counter()
-            self.pushButton_start.setText('暂停')
-            self.pushButton_end.setEnabled(True)
-            self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([0]))
+    ####################
+    # Below are methods to control the vision positioning and update car's position in the window.
+    ####################
+    def positioning_control(self):
+        if self.pushButton_positioning.text() == '启动定位':
+            self.positioning.begin_track()
+            self.begin_update_position()
+            self.pushButton_positioning.setText('停止定位')
+        else:
+            self.positioning.stop_track()
+            self.stop_update_position()
+            self.pushButton_positioning.setText('启动定位')
 
-        elif self.pushButton_start.text() == '暂停':
-            self.Timer.stop()
-            self.time_stop_init = time.perf_counter()
-            self.pushButton_start.setText('继续')
-            self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([2]))
+    def begin_update_position(self):
+        self.positioning_flag = True
+        self.positioning_thread = threading.Thread(target=self.track, daemon=True)
+        self.positioning_thread.start()
 
-        elif self.pushButton_start.text() == '继续':
-            self.time_stop_finl = time.perf_counter()
-            self.Timer.start(100)
-            self.time_stop += self.time_stop_finl - self.time_stop_init
-            self.pushButton_start.setText('暂停')
-            self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([0]))
+    def stop_update_position(self):
+        self.positioning_flag = False
+        if threading.current_thread() != self.positioning_thread:
+            self.positioning_thread.join()
+            self.positioning_thread = None
 
-        else:  # 清零操作
-            self.init_vars()
-            self.pushButton_start.setText('开始')
-            self.drawall()
-
-    def end(self):
-        self.Timer.stop()
-        self.score = self.time_display
-        self.pushButton_start.setText('清零')
-        self.pushButton_end.setEnabled(False)
-        self.pushButton_start.setEnabled(True)
-        self.save()
-        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([1]))
-
-    def traffic_read(self):
-        dirname = QtWidgets.QFileDialog.getExistingDirectory(self, '请选择载入的路况变化', path)
-        if dirname:
-            self.traffic = []
-            for i in range(200):
-                self.traffic.append(extdata.Traffic())
-                self.traffic[-1].read(dirname + '/' + str(i + 1) + '.txt')
-            self.pushButton_traffic.setText('路况' + dirname.split('/')[-1])
-
-    def timeout(self):
-        self.time_now = time.perf_counter()
-        self.second = self.time_now - self.time_init - self.time_stop
-        self.second = int(self.second * 1000) / 1000
-        self.time_display = str(self.second)
-        self.time_display = self.time_display[:self.time_display.find('.') + 2]
-        self.TimeCounter.display(self.time_display)
-
+    def update_position(self):
         x_img, y_img = self.positioning.get_position()
         self.x = x_img / self.positioning.factor * 10
         self.y = y_img / self.positioning.factor * 10
-        start_num, end_num, dist = absorp.absorp(self.x, self.y, self.graph)
-        self.current_traffic = math.floor(self.second) // 1 if math.floor(self.second) // 1 < len(self.traffic) else len(self.traffic) - 1   ###更改其中的1可改变路况变化速率
-        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes(str(start_num) + ' ' + str(end_num) + ' ' + str(dist) + ' ' + str(self.x) + ' ' + str(self.y), 'utf-8'))
-        # if self.second - math.floor(self.second) < 0.2:
-        #     self.client.publish('/smartcar/' + self.comboBox_team.currentText() + '/traffic', bytes(self.traffic[self.current_traffic].original_data, 'utf-8'))
-        
+
         self.drawall()
-
-    def get_road(self) -> tuple:
-        '''This method is to get the current road on which the car is based on the actual position.
-
-        :return: (start_point_index, end_point_index, dist_from_start_point), all int.
-        '''
-
-    def save(self):
-        score = open(path + os.sep + 'scores.txt', 'a')
-        score.write(self.comboBox_team.currentText() + ' ' + self.score + '\n')
-        score.close()
 
     def drawall(self):
         ###画地图
@@ -272,16 +245,84 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
                               self.brush_car)
 
         ###画起终点
-        start_x = self.graph.x[self.depart_point] * self.x_scale + self.width / 35 - self.circle_size / 2
-        start_y = (6000 - self.graph.y[self.depart_point]) * self.y_scale + self.height / 35 - self.circle_size / 2
-        end_x = self.graph.x[self.arrive_point] * self.x_scale + self.width / 35 - self.circle_size / 2
-        end_y = (6000 - self.graph.y[self.arrive_point]) * self.y_scale + self.height / 35 - self.circle_size / 2
+        start_x = self.graph.x[self.depart_point - 1] * self.x_scale + self.width / 35 - self.circle_size / 2
+        start_y = (6000 - self.graph.y[self.depart_point - 1]) * self.y_scale + self.height / 35 - self.circle_size / 2
+        end_x = self.graph.x[self.arrive_point - 1] * self.x_scale + self.width / 35 - self.circle_size / 2
+        end_y = (6000 - self.graph.y[self.arrive_point - 1]) * self.y_scale + self.height / 35 - self.circle_size / 2
         self.scene.addEllipse(start_x, start_y, self.circle_size,
                               self.circle_size, self.pen_start_point,
                               self.brush_start)
         self.scene.addEllipse(end_x, end_y, self.circle_size, self.circle_size,
                               self.pen_end_point, self.brush_end)
 
+    ####################
+    # Below are methods about competition.
+    ####################
+    def start(self):
+        if self.pushButton_start.text() == '开始':
+            self.Timer.start(100)
+            self.score = '0'
+            self.time_init = time.perf_counter()
+            self.pushButton_start.setText('暂停')
+            self.pushButton_end.setEnabled(True)
+            self.client.publish('/smartcar/' + self.team.team_macs[
+                self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1,
+                                payload=bytes([0]))
+
+        elif self.pushButton_start.text() == '暂停':
+            self.Timer.stop()
+            self.time_stop_init = time.perf_counter()
+            self.pushButton_start.setText('继续')
+            self.client.publish('/smartcar/' + self.team.team_macs[
+                self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1,
+                                payload=bytes([2]))
+
+        elif self.pushButton_start.text() == '继续':
+            self.time_stop_finl = time.perf_counter()
+            self.Timer.start(100)
+            self.time_stop += self.time_stop_finl - self.time_stop_init
+            self.pushButton_start.setText('暂停')
+            self.client.publish('/smartcar/' + self.team.team_macs[
+                self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1,
+                                payload=bytes([0]))
+
+        else:  # 清零操作
+            self.init_vars()
+            self.pushButton_start.setText('开始')
+            self.drawall()
+
+    def end(self):
+        self.Timer.stop()
+        self.score = self.time_display
+        self.pushButton_start.setText('清零')
+        self.pushButton_end.setEnabled(False)
+        self.pushButton_start.setEnabled(True)
+        self.save()
+        self.client.publish('/smartcar/' + self.team.team_macs[
+            self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([1]))
+
+    def timeout(self):
+        self.time_now = time.perf_counter()
+        self.second = self.time_now - self.time_init - self.time_stop
+        self.second = int(self.second * 1000) / 1000
+        self.time_display = str(self.second)
+        self.time_display = self.time_display[:self.time_display.find('.') + 2]
+        self.TimeCounter.display(self.time_display)
+
+        start_num, end_num, dist = absorp.absorp(self.x, self.y, self.graph)
+        self.current_traffic = math.floor(self.second) // 1 if math.floor(self.second) // 1 < len(self.traffic) else len(self.traffic) - 1   ###更改其中的1可改变路况变化速率
+        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes([start_num , end_num, dist % 256, dist // 256, self.x % 256, self.x // 256, self.y % 256, self.y // 256]))
+        # if self.second - math.floor(self.second) < 0.2:
+        #     self.client.publish('/smartcar/' + self.comboBox_team.currentText() + '/traffic', bytes(self.traffic[self.current_traffic].original_data, 'utf-8'))
+
+    def save(self):
+        score = open(path + os.sep + 'scores.txt', 'a')
+        score.write(self.comboBox_team.currentText() + ' ' + self.score + '\n')
+        score.close()
+
+    ####################
+    # Below are methods about window control.
+    ####################
     def resizeEvent(self, QResizeEvent):
         self.width = self.Map.width()
         self.height = self.Map.height()
