@@ -81,13 +81,8 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.y = 0
         self.carsize = 20
 
-        #初始化视觉定位信息
-        self.positioning = positioning.VisionPositioning()
-        self.positioning_flag = False
-        self.positioning_timer = QtCore.QTimer()
-        self.positioning_timer.timeout.connect(self.update_position)
-
     def init_ui(self):
+        # 初始化按钮
         # self.actionsave.triggered.connect(self.save)
         self.pushButton_point.clicked.connect(self.choose_points)
         self.pushButton_start.clicked.connect(self.start)
@@ -100,6 +95,12 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.scene = QtWidgets.QGraphicsScene()
         self.scene.clear()
         self.Map.setScene(self.scene)
+
+        # 初始化视觉定位信息
+        self.positioning = positioning.VisionPositioning()
+        self.positioning_flag = False
+        self.positioning_timer = QtCore.QTimer()
+        self.positioning_timer.timeout.connect(self.update_position)
 
         #笔型初始化
         self.pen_start_point = QtGui.QPen(Qt.blue)
@@ -120,7 +121,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             QtGui.QColor(255, 121, 0),
             QtGui.QColor(232, 84, 12),
             QtGui.QColor(255, 50, 5),
-            QtGui.QColor(255, 0, 0), 
+            QtGui.QColor(255, 0, 0),
         ]
         for color in self.colors:
             self.pens.append(
@@ -147,7 +148,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             self.depart_point, self.arrive_point = point_choose_dialog.get_point()
             self.pushButton_point.setText('起点:' + str(self.depart_point) +
                                           ' 终点:' + str(self.arrive_point))
-            
+
             self.positioning.initial_position = [(6000 - self.graph.y[self.depart_point - 1]) // 10 * self.positioning.factor,
                                                 200,
                                                 self.graph.x[self.depart_point - 1] // 10 * self.positioning.factor,

@@ -51,7 +51,7 @@ class Line:
         return x_pro, y_pro
 
 
-def absorp(x: int, y: int, map) -> tuple:
+def absorp(x: int, y: int, map) -> (int, int, int):
     '''
 
     :param x: car's actual x position
@@ -89,6 +89,6 @@ def absorp(x: int, y: int, map) -> tuple:
 
     # Calculate the distance from the start of the road
     start_point = Point(map.x[start_num - 1], map.y[start_num - 1])
-    s = car.cal_dis(start_point)
+    s = int(car.cal_dis(start_point))
 
     return start_num, end_num, s
