@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>782</width>
-    <height>549</height>
+    <width>970</width>
+    <height>654</height>
    </rect>
   </property>
   <property name="font">
@@ -109,7 +109,25 @@
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout" stretch="5,0,0,0,0,0,0,8">
+       <layout class="QVBoxLayout" name="verticalLayout" stretch="3,3,3,3,10,3,3,0,0,0,7">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="font">
+           <font>
+            <family>Constantia</family>
+            <pointsize>16</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>用时</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,1">
           <item>
@@ -147,6 +165,62 @@
               <weight>75</weight>
               <bold>true</bold>
              </font>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Sunken</enum>
+            </property>
+            <property name="text">
+             <string>秒</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="font">
+           <font>
+            <family>Constantia</family>
+            <pointsize>16</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>罚时</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,1">
+          <item>
+           <widget class="QLCDNumber" name="Penalty">
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="segmentStyle">
+             <enum>QLCDNumber::Flat</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="font">
+             <font>
+              <family>Constantia</family>
+              <pointsize>16</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Sunken</enum>
             </property>
             <property name="text">
              <string>秒</string>
@@ -198,11 +272,11 @@
            <string notr="true">background-color: rgb(130, 147, 201, 100);</string>
           </property>
           <property name="currentText">
-           <string>选择队伍</string>
+           <string>Team</string>
           </property>
           <item>
            <property name="text">
-            <string>选择队伍</string>
+            <string>Team</string>
            </property>
           </item>
          </widget>
@@ -292,7 +366,7 @@
          </widget>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1,1">
+         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,2,2">
           <item>
            <spacer name="verticalSpacer_2">
             <property name="orientation">
@@ -324,7 +398,7 @@
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>images/2.jpg</normaloff>images/2.jpg</iconset>
+              <normaloff>../../../SmartCar-master (1)/SmartCar-master/Smartcar_PC/images/2.jpg</normaloff>../../../SmartCar-master (1)/SmartCar-master/Smartcar_PC/images/2.jpg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -390,7 +464,7 @@
   </action>
  </widget>
  <resources>
-  <include location="picture.qrc"/>
+  <include location="../../../SmartCar-master (1)/SmartCar-master/Smartcar_PC/picture.qrc"/>
  </resources>
  <connections/>
 </ui>

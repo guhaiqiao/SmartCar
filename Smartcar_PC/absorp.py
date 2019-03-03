@@ -29,6 +29,8 @@ class Line:
     def cal_distance(self, point):  # 计算点到线段距离
         l_s = Line(self.start, point)
         flag = self.cal_dot(l_s) / (self.length**2)
+        if l_s.length == 0:
+            return 0
         if flag > 1:
             return self.end.cal_dis(point)
         elif flag < 0:
@@ -65,8 +67,8 @@ def absorp(x: int, y: int, map) -> (int, int, int):
     for i in range(map.point_num):
         for j in range(i, map.point_num):
             if map.line[i][j] == 1:
-                start = Point(map.x[i], map.y[i])
-                end = Point(map.x[j], map.y[j])
+                start = Point(map.x[i], 6000 - map.y[i])
+                end = Point(map.x[j], 6000 - map.y[j])
                 lines.append(Line(start, end))
     for line in lines:
         dis.append((int)(line.cal_distance(car)))
@@ -75,11 +77,11 @@ def absorp(x: int, y: int, map) -> (int, int, int):
 
     # Get the index of the start and the end of the road
     for i in range(map.point_num):
-        if map.x[i] == nearest.start.x and map.y[i] == nearest.start.y:
+        if map.x[i] == nearest.start.x and 6000 - map.y[i] == nearest.start.y:
             start_num = i + 1
             break
     for i in range(map.point_num):
-        if map.x[i] == nearest.end.x and map.y[i] == nearest.end.y:
+        if map.x[i] == nearest.end.x and 6000 - map.y[i] == nearest.end.y:
             end_num = i + 1
             break
     if start_num > end_num:
@@ -92,3 +94,4 @@ def absorp(x: int, y: int, map) -> (int, int, int):
     s = int(car.cal_dis(start_point))
 
     return start_num, end_num, s
+    # return nearest.start, nearest.end

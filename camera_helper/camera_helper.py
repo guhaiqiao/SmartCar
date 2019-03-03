@@ -24,7 +24,7 @@ class Panel(ui_panel, QtBaseClass_panel):
         self.current_point = 1
         self.frame_width = 0
         self.frame_height = 0
-        self.cap = cv.VideoCapture(3)
+        self.cap = cv.VideoCapture(int(sys.argv[1]))
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
 
@@ -49,17 +49,22 @@ class Panel(ui_panel, QtBaseClass_panel):
             return False
 
     def save(self):
-        with open('./save.txt', 'w') as f:
+        with open('./save.txt', 'a+') as f:
+            f.write('Camera: ' + sys.argv[1] + '\n')
             f.write('Frame size: (' + str(self.frame_width) + ', ' + str(self.frame_height) + ')\n\n')
-
-            f.write('Point 1 (upper left): (' + str(self.point_position[0][0]) + ', ' + str(
-                self.point_position[0][1]) + ')\n')
-            f.write('Point 2 (upper right): (' + str(self.point_position[1][0]) + ', ' + str(
-                self.point_position[1][1]) + ')\n')
-            f.write('Point 3 (lower right): (' + str(self.point_position[2][0]) + ', ' + str(
-                self.point_position[2][1]) + ')\n')
-            f.write('Point 4 (lower left): (' + str(self.point_position[3][0]) + ', ' + str(
-                self.point_position[3][1]) + ')\n')
+            f.write('Points: ')
+            # f.write('Point 1 (upper left): (' + str(self.point_position[0][0]) + ', ' + str(
+            #     self.point_position[0][1]) + ')\n')
+            # f.write('Point 2 (upper right): (' + str(self.point_position[1][0]) + ', ' + str(
+            #     self.point_position[1][1]) + ')\n')
+            # f.write('Point 3 (lower right): (' + str(self.point_position[2][0]) + ', ' + str(
+            #     self.point_position[2][1]) + ')\n')
+            # f.write('Point 4 (lower left): (' + str(self.point_position[3][0]) + ', ' + str(
+            #     self.point_position[3][1]) + ')\n')
+            for i in range(4):
+                for j in range(2):
+                    f.write(str(self.point_position[i][j]) + ' ')
+            f.write('\n\n')
 
     def toggled_point1(self):
         self.slider_x.setValue(self.point_position[0][0])

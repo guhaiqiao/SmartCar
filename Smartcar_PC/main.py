@@ -10,6 +10,7 @@ import extdata
 import positioning
 import absorp
 import picture_rc
+import dijkstra
 
 path = os.getcwd()
 
@@ -50,6 +51,9 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.TimeCounter.display('0')
         self.Timer.timeout.connect(self.timeout)
 
+        # 初始化罚时
+        self.Penalty.display('0')
+
         #初始化队伍名称
         self.team = extdata.Team()
         self.team.read(TEAM)
@@ -81,8 +85,18 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.y = 0
         self.carsize = 20
 
+        #初始化定位道路
+        self.start_num = 0
+        self.end_num = 0
+
+        #比赛开始标志
+        self.start_flag = True
+
+        #未走道路信息
+        self.end_dist = -1
+        self.end_path = []
+
     def init_ui(self):
-        # 初始化按钮
         # self.actionsave.triggered.connect(self.save)
         self.pushButton_point.clicked.connect(self.choose_points)
         self.pushButton_start.clicked.connect(self.start)
@@ -96,7 +110,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.scene.clear()
         self.Map.setScene(self.scene)
 
-        # 初始化视觉定位信息
+        #初始化视觉定位信息
         self.positioning = positioning.VisionPositioning()
         self.positioning_flag = False
         self.positioning_timer = QtCore.QTimer()
@@ -148,11 +162,11 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             self.depart_point, self.arrive_point = point_choose_dialog.get_point()
             self.pushButton_point.setText('起点:' + str(self.depart_point) +
                                           ' 终点:' + str(self.arrive_point))
-
+            
             self.positioning.initial_position = [(6000 - self.graph.y[self.depart_point - 1]) // 10 * self.positioning.factor,
-                                                200,
+                                                800,
                                                 self.graph.x[self.depart_point - 1] // 10 * self.positioning.factor,
-                                                200]
+                                                800]
             if self.positioning.track_flag:
                 self.positioning.stop_track()
                 self.positioning.begin_track()
@@ -203,13 +217,53 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
 
     def update_position(self):
         x_img, y_img = self.positioning.get_position()
-        self.x = x_img / self.positioning.factor * 10
-        self.y = y_img / self.positioning.factor * 10
+        self.x = int(x_img / self.positioning.factor * 10)
+        self.y = int(y_img / self.positioning.factor * 10)
 
         self.drawall()
+        if math.sqrt((self.x - self.graph.x[self.arrive_point - 1])**2 + (6000 - self.y - self.graph.y[self.arrive_point - 1])**2) < 300:
+            self.end()
+
+    def draw_end_dist(self):
+        if self.end_dist == -1:      # 如果是第一次计算
+            end_road_start, end_road_stop, end_road_dist = absorp.absorp(self.x, self.y, self.graph)
+            route_from_start = dijkstra.get_route(end_road_start, self.arrive_point)
+            cost_from_start = route_from_start['cost'] + end_road_dist
+            route_from_end = dijkstra.get_route(end_road_stop, self.arrive_point)
+            cost_from_end = route_from_end['cost'] + dijkstra.get_cost(end_road_start, end_road_stop) - end_road_dist
+            if cost_from_start < cost_from_end:
+                end_route = route_from_start
+            else:
+                end_route = route_from_end
+            self.end_dist = end_route['cost']
+            self.end_path = end_route['path']
+
+            dist = math.sqrt((self.x - self.graph.x[self.arrive_point - 1])**2 + (6000 - self.y - self.graph.y[self.arrive_point - 1])**2)
+            print('real dist: ' + str(dist))
+            if dist <= 300:  # 认为到达终点
+                self.end_dist = 0
+                self.end_path = []
+            
+            print('end_dist: ' + str(self.end_dist))
+            route = dijkstra.get_route(self.depart_point, self.arrive_point)
+            self.Penalty.display(min(self.end_dist / route['cost'] * 120.0, 120.0))
+
+        for i in range(len(self.end_path) - 1):
+            start_point = int(self.end_path[i])
+            end_point = int(self.end_path[i + 1])
+            start_x = self.graph.x[start_point - 1] * self.x_scale + self.width / 35
+            start_y = (6000 - self.graph.y[start_point - 1]) * self.y_scale + self.height / 35
+            end_x = self.graph.x[end_point - 1] * self.x_scale + self.width / 35
+            end_y = (6000 - self.graph.y[end_point - 1]) * self.y_scale + self.height / 35
+            self.scene.addLine(start_x, start_y, end_x, end_y, QtGui.QPen(
+                    Qt.darkRed,
+                    10,
+                    QtCore.Qt.SolidLine,  # 颜色数字
+                    QtCore.Qt.RoundCap,
+                    QtCore.Qt.RoundJoin))
 
     def drawall(self):
-        ###画地图
+        ### 画地图
         self.scene.clear()
         self.x_scale = self.width / self.x_max * 9 / 10
         self.y_scale = self.height / self.y_max * 9 / 10
@@ -227,8 +281,37 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
                         QtCore.Qt.SolidLine,  # 颜色数字
                         QtCore.Qt.RoundCap,
                         QtCore.Qt.RoundJoin))   #去掉路况后用黑色线画地图
+        
+        ### 画最短路径
+        route = dijkstra.get_route(self.depart_point, self.arrive_point)
+        path = route['path']
+        for i in range(len(path) - 1):
+            start_point = int(path[i])
+            end_point = int(path[i + 1])
+            start_x = self.graph.x[start_point - 1] * self.x_scale + self.width / 35
+            start_y = (6000 - self.graph.y[start_point - 1]) * self.y_scale + self.height / 35
+            end_x = self.graph.x[end_point - 1] * self.x_scale + self.width / 35
+            end_y = (6000 - self.graph.y[end_point - 1]) * self.y_scale + self.height / 35
+            self.scene.addLine(start_x, start_y, end_x, end_y, QtGui.QPen(
+                    Qt.cyan,
+                    10,
+                    QtCore.Qt.SolidLine,  # 颜色数字
+                    QtCore.Qt.RoundCap,
+                    QtCore.Qt.RoundJoin))
 
-        ###画小车
+        ### 画当前位置
+        self.start_x = self.graph.x[self.start_num - 1] * self.x_scale + self.width / 35
+        self.start_y = (6000 - self.graph.y[self.start_num - 1]) * self.y_scale + self.height / 35
+        self.end_x = self.graph.x[self.end_num - 1] * self.x_scale + self.width / 35
+        self.end_y = (6000 - self.graph.y[self.end_num - 1]) * self.y_scale + self.height / 35
+        self.scene.addLine(self.start_x, self.start_y, self.end_x, self.end_y, QtGui.QPen(
+                        Qt.darkGreen,
+                        10,
+                        QtCore.Qt.SolidLine,  # 颜色数字
+                        QtCore.Qt.RoundCap,
+                        QtCore.Qt.RoundJoin))
+
+        ### 画小车
         # self.x = 1000 + 500 * math.cos(self.second)   #模拟生成位置
         # self.y = 1000 + 500 * math.sin(self.second)
         x = self.x * self.x_scale + self.width / 35 - self.carsize / 20
@@ -236,7 +319,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.scene.addEllipse(x, y, self.carsize, self.carsize, self.pen_car,
                               self.brush_car)
 
-        ###画起终点
+        ### 画起终点
         start_x = self.graph.x[self.depart_point - 1] * self.x_scale + self.width / 35 - self.circle_size / 2
         start_y = (6000 - self.graph.y[self.depart_point - 1]) * self.y_scale + self.height / 35 - self.circle_size / 2
         end_x = self.graph.x[self.arrive_point - 1] * self.x_scale + self.width / 35 - self.circle_size / 2
@@ -246,6 +329,11 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
                               self.brush_start)
         self.scene.addEllipse(end_x, end_y, self.circle_size, self.circle_size,
                               self.pen_end_point, self.brush_end)
+
+        ### 画未走路线
+        if self.start_flag == False:
+            self.draw_end_dist()
+
 
     ####################
     # Below are methods about competition.
@@ -257,6 +345,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
             self.time_init = time.perf_counter()
             self.pushButton_start.setText('暂停')
             self.pushButton_end.setEnabled(True)
+            self.start_flag = True
             self.client.publish('/smartcar/' + self.team.team_macs[
                 self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1,
                                 payload=bytes([0]))
@@ -289,6 +378,7 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.pushButton_start.setText('清零')
         self.pushButton_end.setEnabled(False)
         self.pushButton_start.setEnabled(True)
+        self.start_flag = False
         self.save()
         self.client.publish('/smartcar/' + self.team.team_macs[
             self.team.team_names.index(self.comboBox_team.currentText())] + '/command', qos=1, payload=bytes([1]))
@@ -301,11 +391,13 @@ class MainUi(Ui_MainWindow, QtBaseClass_MainWindow):
         self.time_display = self.time_display[:self.time_display.find('.') + 2]
         self.TimeCounter.display(self.time_display)
 
-        start_num, end_num, dist = absorp.absorp(self.x, self.y, self.graph)
+        self.start_num, self.end_num, dist = absorp.absorp(self.x, self.y, self.graph)
         self.current_traffic = math.floor(self.second) // 1 if math.floor(self.second) // 1 < len(self.traffic) else len(self.traffic) - 1   ###更改其中的1可改变路况变化速率
-        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes([start_num , end_num, dist % 256, dist // 256, self.x % 256, self.x // 256, self.y % 256, self.y // 256]))
+        self.client.publish('/smartcar/' + self.team.team_macs[self.team.team_names.index(self.comboBox_team.currentText())] + '/position', bytes([self.start_num , self.end_num, dist % 256, dist // 256, self.x % 256, self.x // 256, self.y % 256, self.y // 256]))
         # if self.second - math.floor(self.second) < 0.2:
         #     self.client.publish('/smartcar/' + self.comboBox_team.currentText() + '/traffic', bytes(self.traffic[self.current_traffic].original_data, 'utf-8'))
+        if int(self.second) >= 180:
+            self.end()
 
     def save(self):
         score = open(path + os.sep + 'scores.txt', 'a')
