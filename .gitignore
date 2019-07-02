@@ -1,0 +1,7 @@
+
+*.pyc
+*.pyc
+Smartcar_PC/__pycache__/absorp.cpython-37.pyc
+Smartcar_PC/__pycache__/extdata.cpython-37.pyc
+Smartcar_PC/__pycache__/picture_rc.cpython-37.pyc
+Smartcar_PC/__pycache__/positioning.cpython-37.pyc
